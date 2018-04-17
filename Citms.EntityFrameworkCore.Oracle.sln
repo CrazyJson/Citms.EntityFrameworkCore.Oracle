@@ -1,13 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26730.15
+VisualStudioVersion = 15.0.27130.2027
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{BC8C436A-FAC4-4528-80F1-2DAC8D367E82}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{FCC3C061-E75A-4C8B-8152-8F75628297F5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Citms.EntityFrameworkCore.Oracle", "src\Citms.EntityFrameworkCore.Oracle\Citms.EntityFrameworkCore.Oracle.csproj", "{6E0391BF-F903-4405-AFE9-D65CE09254FC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Citms.EntityFrameworkCore.Oracle", "src\Citms.EntityFrameworkCore.Oracle\Citms.EntityFrameworkCore.Oracle.csproj", "{6E0391BF-F903-4405-AFE9-D65CE09254FC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleApp1", "test\ConsoleApp1\ConsoleApp1.csproj", "{6A4D99DD-D6C1-45E0-8482-28C4C098E968}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -19,12 +21,17 @@ Global
 		{6E0391BF-F903-4405-AFE9-D65CE09254FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6E0391BF-F903-4405-AFE9-D65CE09254FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6E0391BF-F903-4405-AFE9-D65CE09254FC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6A4D99DD-D6C1-45E0-8482-28C4C098E968}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6A4D99DD-D6C1-45E0-8482-28C4C098E968}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6A4D99DD-D6C1-45E0-8482-28C4C098E968}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6A4D99DD-D6C1-45E0-8482-28C4C098E968}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{6E0391BF-F903-4405-AFE9-D65CE09254FC} = {BC8C436A-FAC4-4528-80F1-2DAC8D367E82}
+		{6A4D99DD-D6C1-45E0-8482-28C4C098E968} = {FCC3C061-E75A-4C8B-8152-8F75628297F5}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AEA2B790-DDB2-4D7B-8710-DEFBEABA742F}

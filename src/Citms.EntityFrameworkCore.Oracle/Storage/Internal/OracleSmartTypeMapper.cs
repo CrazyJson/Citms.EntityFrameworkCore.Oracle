@@ -16,7 +16,7 @@ namespace EFCore.Oracle.Storage.Internal
         private static readonly OracleDateTimeTypeMapping _dateTime = new OracleDateTimeTypeMapping("datetime", DbType.DateTime);
         private static readonly OracleDateTimeOffsetTypeMapping _dateTimeOffset = new OracleDateTimeOffsetTypeMapping("datetime", DbType.DateTime);
         private static readonly TimeSpanTypeMapping _time = new TimeSpanTypeMapping("time", DbType.Time);
-        private static readonly GuidTypeMapping _oldGuid = new GuidTypeMapping("binary(16)", DbType.Guid);
+        private static readonly GuidTypeMapping _oldGuid = new GuidTypeMapping("varchar2(50)", DbType.Guid);
 
         private readonly IOracleOptions _options;
 
@@ -64,23 +64,23 @@ namespace EFCore.Oracle.Storage.Internal
             //}
 
             // SupportsDateTime6
-            if (!_options.ConnectionSettings.ServerVersion.SupportsDateTime6)
-            {
-                if (mapping.StoreType == "datetime(6)" && mapping.ClrType == typeof(DateTime))
-                {
-                    return _dateTime;
-                }
+            //if (!_options.ConnectionSettings.OracleVersion.SupportsDateTime6)
+            //{
+            //    if (mapping.StoreType == "datetime(6)" && mapping.ClrType == typeof(DateTime))
+            //    {
+            //        return _dateTime;
+            //    }
 
-                if (mapping.StoreType == "datetime(6)" && mapping.ClrType == typeof(DateTimeOffset))
-                {
-                    return _dateTimeOffset;
-                }
+            //    if (mapping.StoreType == "datetime(6)" && mapping.ClrType == typeof(DateTimeOffset))
+            //    {
+            //        return _dateTimeOffset;
+            //    }
 
-                if (mapping.StoreType == "time(6)")
-                {
-                    return _time;
-                }
-            }
+            //    if (mapping.StoreType == "time(6)")
+            //    {
+            //        return _time;
+            //    }
+            //}
 
             return mapping;
         }

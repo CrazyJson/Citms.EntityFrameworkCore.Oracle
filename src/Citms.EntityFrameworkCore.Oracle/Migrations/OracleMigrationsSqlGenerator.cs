@@ -33,22 +33,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         {
             Check.NotNull(operation, nameof(operation));
             Check.NotNull(builder, nameof(builder));
-
-            if (operation is OracleCreateDatabaseOperation createDatabaseOperation)
-            {
-                Generate(createDatabaseOperation, model, builder);
-                builder.EndCommand();
-                return;
-            }
-
-            var dropDatabaseOperation = operation as OracleDropDatabaseOperation;
-            if (dropDatabaseOperation is OracleDropDatabaseOperation)
-            {
-                Generate(dropDatabaseOperation, model, builder);
-                builder.EndCommand();
-                return;
-            }
-
+          
             base.Generate(operation, model, builder);
         }
 
@@ -172,50 +157,50 @@ namespace Microsoft.EntityFrameworkCore.Migrations
 
             if (operation.NewName != null)
             {
-                if (_options.ConnectionSettings.ServerVersion.SupportsRenameIndex)
-                {
-                    builder.Append("ALTER TABLE ")
-                        .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Table, operation.Schema))
-                        .Append(" RENAME INDEX ")
-                        .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
-                        .Append(" TO ")
-                        .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.NewName))
-                        .AppendLine(";");
+                //if (_options.ConnectionSettings.ServerVersion.SupportsRenameIndex)
+                //{
+                //    builder.Append("ALTER TABLE ")
+                //        .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Table, operation.Schema))
+                //        .Append(" RENAME INDEX ")
+                //        .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
+                //        .Append(" TO ")
+                //        .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.NewName))
+                //        .AppendLine(";");
 
-                    EndStatement(builder);
-                }
-                else
-                {
-                    var createTableSyntax = _options.GetCreateTable(Dependencies.SqlGenerationHelper, operation.Table, operation.Schema);
+                //    EndStatement(builder);
+                //}
+                //else
+                //{
+                //    var createTableSyntax = _options.GetCreateTable(Dependencies.SqlGenerationHelper, operation.Table, operation.Schema);
 
-                    if (createTableSyntax == null)
-                        throw new InvalidOperationException($"Could not find SHOW CREATE TABLE syntax for table: '{Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Table, operation.Schema)}'");
+                //    if (createTableSyntax == null)
+                //        throw new InvalidOperationException($"Could not find SHOW CREATE TABLE syntax for table: '{Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Table, operation.Schema)}'");
 
-                    var indexDefinitionRe = new Regex($"^\\s*((?:UNIQUE\\s)?KEY\\s)`?{operation.Name}`?(.*)$", RegexOptions.Multiline);
-                    var match = indexDefinitionRe.Match(createTableSyntax);
+                //    var indexDefinitionRe = new Regex($"^\\s*((?:UNIQUE\\s)?KEY\\s)`?{operation.Name}`?(.*)$", RegexOptions.Multiline);
+                //    var match = indexDefinitionRe.Match(createTableSyntax);
 
-                    string newIndexDefinition;
-                    if (match.Success)
-                        newIndexDefinition = match.Groups[1].Value + Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.NewName) + " " + match.Groups[2].Value.Trim().TrimEnd(',');
-                    else
-                        throw new InvalidOperationException($"Could not find column definition for table: '{Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Table, operation.Schema)}' column: {operation.Name}");
+                //    string newIndexDefinition;
+                //    if (match.Success)
+                //        newIndexDefinition = match.Groups[1].Value + Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.NewName) + " " + match.Groups[2].Value.Trim().TrimEnd(',');
+                //    else
+                //        throw new InvalidOperationException($"Could not find column definition for table: '{Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Table, operation.Schema)}' column: {operation.Name}");
 
-                    builder
-                        .Append("ALTER TABLE ")
-                        .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Table, operation.Schema))
-                        .Append(" DROP INDEX ")
-                        .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
-                        .AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
-                    EndStatement(builder);
+                //    builder
+                //        .Append("ALTER TABLE ")
+                //        .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Table, operation.Schema))
+                //        .Append(" DROP INDEX ")
+                //        .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
+                //        .AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
+                //    EndStatement(builder);
 
-                    builder
-                        .Append("ALTER TABLE ")
-                        .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Table, operation.Schema))
-                        .Append(" ADD ")
-                        .Append(newIndexDefinition)
-                        .AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
-                    EndStatement(builder);
-                }
+                //    builder
+                //        .Append("ALTER TABLE ")
+                //        .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Table, operation.Schema))
+                //        .Append(" ADD ")
+                //        .Append(newIndexDefinition)
+                //        .AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
+                //    EndStatement(builder);
+                //}
             }
         }
 
@@ -466,10 +451,10 @@ namespace Microsoft.EntityFrameworkCore.Migrations
                         autoIncrement = true;
                         break;
                     case "datetime":
-                        if (!_options.ConnectionSettings.ServerVersion.SupportsDateTime6)
-                            throw new InvalidOperationException(
-                                $"Error in {table}.{name}: DATETIME does not support values generated " +
-                                "on Add or Update in Oracle <= 5.5, try explicitly setting the column type to TIMESTAMP");
+                        //if (!_options.ConnectionSettings.ServerVersion.SupportsDateTime6)
+                        //    throw new InvalidOperationException(
+                        //        $"Error in {table}.{name}: DATETIME does not support values generated " +
+                        //        "on Add or Update in Oracle <= 5.5, try explicitly setting the column type to TIMESTAMP");
                         goto case "timestamp";
                     case "timestamp":
                         defaultValueSql = $"CURRENT_TIMESTAMP({matchLen})";
@@ -483,11 +468,11 @@ namespace Microsoft.EntityFrameworkCore.Migrations
                 switch (matchType)
                 {
                     case "datetime":
-                        if (!_options.ConnectionSettings.ServerVersion.SupportsDateTime6)
-                        {
-                            throw new InvalidOperationException($"Error in {table}.{name}: DATETIME does not support values generated " +
-                                "on Add or Update in Oracle <= 5.5, try explicitly setting the column type to TIMESTAMP");
-                        }
+                        //if (!_options.ConnectionSettings.ServerVersion.SupportsDateTime6)
+                        //{
+                        //    throw new InvalidOperationException($"Error in {table}.{name}: DATETIME does not support values generated " +
+                        //        "on Add or Update in Oracle <= 5.5, try explicitly setting the column type to TIMESTAMP");
+                        //}
 
                         goto case "timestamp";
                     case "timestamp":

@@ -40,9 +40,9 @@ namespace EFCore.Oracle.Storage.Internal
 
 	    // string
         private readonly OracleStringTypeMapping _char            = new OracleStringTypeMapping("char", DbType.AnsiStringFixedLength);
-        private readonly OracleStringTypeMapping _varchar         = new OracleStringTypeMapping("varchar", DbType.AnsiString);
-	    private readonly OracleStringTypeMapping _varchar127      = new OracleStringTypeMapping("varchar(127)", DbType.AnsiString, true, 127);
-	    private readonly OracleStringTypeMapping _varcharmax      = new OracleStringTypeMapping("longtext", DbType.AnsiString);
+        private readonly OracleStringTypeMapping _varchar         = new OracleStringTypeMapping("VARCHAR2", DbType.AnsiString);
+	    private readonly OracleStringTypeMapping _varchar127      = new OracleStringTypeMapping("VARCHAR2(127)", DbType.AnsiString, true, 127);
+	    private readonly OracleStringTypeMapping _varcharmax      = new OracleStringTypeMapping("VARCHAR2(4000)", DbType.AnsiString);
 
         // DateTime
         private readonly OracleDateTimeTypeMapping _dateTime6 = new OracleDateTimeTypeMapping("datetime(6)", DbType.DateTime);
@@ -58,7 +58,7 @@ namespace EFCore.Oracle.Storage.Internal
         private readonly RelationalTypeMapping _rowversion   = new OracleByteArrayTypeMapping("TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP", DbType.Binary);
 
         // guid
-	    private readonly GuidTypeMapping _uniqueidentifier   = new GuidTypeMapping("char(36)", DbType.Guid);
+	    private readonly GuidTypeMapping _uniqueidentifier   = new GuidTypeMapping("VARCHAR2(36)", DbType.Guid);
 
         readonly Dictionary<string, RelationalTypeMapping> _storeTypeMappings;
         readonly Dictionary<Type, RelationalTypeMapping> _clrTypeMappings;

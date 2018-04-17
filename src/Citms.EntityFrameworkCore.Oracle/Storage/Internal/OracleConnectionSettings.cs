@@ -15,7 +15,7 @@ namespace EFCore.Oracle.Storage.Internal
 
         private static OracleConnectionStringBuilder _settingsCsb(OracleConnectionStringBuilder csb)
         {
-            return csb;
+            return new OracleConnectionStringBuilder(csb.ConnectionString);
         }
 
         public static OracleConnectionSettings GetSettings(string connectionString)
@@ -24,14 +24,13 @@ namespace EFCore.Oracle.Storage.Internal
             var settingsCsb = _settingsCsb(csb);
             return Settings.GetOrAdd(settingsCsb.ConnectionString, key =>
             {
-                csb.Pooling = false;
                 string serverVersion;
                 using (var schemalessConnection = new OracleConnection(csb.ConnectionString))
                 {
                     schemalessConnection.Open();
                     serverVersion = schemalessConnection.ServerVersion;
                 }
-                var version = new ServerVersion(serverVersion);
+                var version = new OracleVersion(serverVersion);
                 return new OracleConnectionSettings(settingsCsb, version);
             });
         }
@@ -50,7 +49,7 @@ namespace EFCore.Oracle.Storage.Internal
                 }
                 try
                 {
-                    var version = new ServerVersion(connection.ServerVersion);
+                    var version = new OracleVersion(connection.ServerVersion);
                     var connectionSettings = new OracleConnectionSettings(settingsCsb, version);
                     return connectionSettings;
                 }
@@ -62,11 +61,11 @@ namespace EFCore.Oracle.Storage.Internal
             });
         }
 
-        internal OracleConnectionSettings(OracleConnectionStringBuilder settingsCsb, ServerVersion serverVersion)
+        internal OracleConnectionSettings(OracleConnectionStringBuilder settingsCsb, OracleVersion serverVersion)
         {
-            ServerVersion = serverVersion;
+            OracleVersion = serverVersion;
         }
 
-        public readonly ServerVersion ServerVersion;
+        public readonly OracleVersion OracleVersion;
     }
 }
