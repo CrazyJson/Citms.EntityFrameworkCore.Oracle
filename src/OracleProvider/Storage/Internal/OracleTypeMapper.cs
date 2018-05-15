@@ -11,26 +11,32 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Oracle.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.EntityFrameworkCore.Utilities;
 
 namespace Microsoft.EntityFrameworkCore.Oracle.Storage.Internal
 {
     public class OracleTypeMapper : RelationalTypeMapper
     {
+        private readonly OracleStringTypeMapping _defaultUnicodeString
+         = new OracleStringTypeMapping("NVARCHAR2(2000)", dbType: null, unicode: true);
+
+        private readonly OracleStringTypeMapping _keyUnicodeString
+            = new OracleStringTypeMapping("NVARCHAR2(450)", dbType: null, unicode: true, size: 450);
+
+        private readonly OracleStringTypeMapping _defaultAnsiString
+            = new OracleStringTypeMapping("VARCHAR2(4000)", dbType: DbType.AnsiString);
+
         private readonly OracleStringTypeMapping _unboundedUnicodeString
             = new OracleStringTypeMapping(
                 "NCLOB",
                 dbType: null,
                 unicode: true);
 
+        private readonly OracleByteArrayTypeMapping _unboundedBinary
+            = new OracleByteArrayTypeMapping("BLOB");
+
         private readonly OracleByteArrayTypeMapping _rowversion
-            = new OracleByteArrayTypeMapping(
-                "RAW(8)",
-                dbType: DbType.Binary,
-                size: 8,
-                comparer: new ValueComparer<byte[]>(
-                    (v1, v2) => StructuralComparisons.StructuralEqualityComparer.Equals(v1, v2),
-                    v => StructuralComparisons.StructuralEqualityComparer.GetHashCode(v),
-                    v => v == null ? null : v.ToArray()));
+            = new OracleByteArrayTypeMapping("RAW(8)", dbType: DbType.Binary, size: 8);
 
         private readonly IntTypeMapping _int
             = new IntTypeMapping("NUMBER(10)", DbType.Int32);
@@ -116,9 +122,8 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Storage.Internal
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
         public OracleTypeMapper(
-            [NotNull] TypeMappingSourceDependencies dependencies,
-            [NotNull] RelationalTypeMappingSourceDependencies relationalDependencies)
-            : base(dependencies, relationalDependencies)
+            [NotNull] RelationalTypeMapperDependencies relationalDependencies)
+            : base(relationalDependencies)
         {
             _clrTypeMappings
                 = new Dictionary<Type, RelationalTypeMapping>
@@ -161,120 +166,41 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Storage.Internal
                 };
         }
 
+        public override RelationalTypeMapping FindMapping(Type clrType)
+        {
+            Check.NotNull(clrType, nameof(clrType));
+
+            var underlyingType = clrType.UnwrapNullableType().UnwrapEnumType();
+
+            return underlyingType == typeof(string)
+                ? _defaultUnicodeString
+                : underlyingType == typeof(byte[])
+                    ? _unboundedBinary
+                    : base.FindMapping(clrType);
+        }
+
+        protected override IReadOnlyDictionary<Type, RelationalTypeMapping> GetClrTypeMappings()
+                    => _clrTypeMappings;
+
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
-        protected override RelationalTypeMapping FindMapping(in RelationalTypeMappingInfo mappingInfo)
-        {
-            var mapping = FindRawMapping(mappingInfo)?.Clone(mappingInfo);
+        protected override string GetColumnType(IProperty property) => property.Oracle().ColumnType;
 
-            if (_disallowedMappings.Contains(mapping?.StoreType))
-            {
-                throw new ArgumentException(OracleStrings.UnqualifiedDataType(mapping.StoreType));
-            }
-
-            return mapping;
-        }
-
-        protected override IReadOnlyDictionary<Type, RelationalTypeMapping> GetClrTypeMappings()
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override string GetColumnType([NotNull] IProperty property)
-        {
-            throw new NotImplementedException();
-        }
-
+        /// <summary>
+        ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
+        ///     directly from your code. This API may change or be removed in future releases.
+        /// </summary>
         protected override IReadOnlyDictionary<string, RelationalTypeMapping> GetStoreTypeMappings()
-        {
-            throw new NotImplementedException();
-        }
+            => _storeTypeMappings;
 
-        private RelationalTypeMapping FindRawMapping(RelationalTypeMappingInfo mappingInfo)
-        {
-            var clrType = mappingInfo.ClrType;
-            var storeTypeName = mappingInfo.StoreTypeName;
-            var storeTypeNameBase = mappingInfo.StoreTypeNameBase;
-
-            if (storeTypeName != null)
-            {
-                if (clrType == typeof(float)
-                    && mappingInfo.Size != null
-                    && mappingInfo.Size <= 24
-                    && (storeTypeNameBase.Equals("float", StringComparison.OrdinalIgnoreCase)
-                        || storeTypeNameBase.Equals("double precision", StringComparison.OrdinalIgnoreCase)))
-                {
-                    return _real;
-                }
-
-                if (_storeTypeMappings.TryGetValue(storeTypeName, out var mapping)
-                    || _storeTypeMappings.TryGetValue(storeTypeNameBase, out mapping))
-                {
-                    return clrType == null
-                           || mapping.ClrType == clrType
-                        ? mapping
-                        : null;
-                }
-            }
-
-            if (clrType != null)
-            {
-                if (_clrTypeMappings.TryGetValue(clrType, out var mapping))
-                {
-                    return mapping;
-                }
-
-                if (clrType == typeof(string))
-                {
-                    var isAnsi = mappingInfo.IsUnicode == false;
-                    var isFixedLength = mappingInfo.IsFixedLength == true;
-                    var baseName = (isAnsi ? "" : "N") + (isFixedLength ? "CHAR" : "VARCHAR2");
-                    var unboundedName = isAnsi ? "CLOB" : "NCLOB";
-                    var maxSize = isAnsi ? 4000 : 2000;
-                    var storeTypePostfix = (StoreTypePostfix?)null;
-
-                    var size = (int?)(mappingInfo.Size ?? (mappingInfo.IsKeyOrIndex ? (isAnsi ? 900 : 450) : maxSize));
-                    if (size > maxSize)
-                    {
-                        size = null;
-                        storeTypePostfix = StoreTypePostfix.None;
-                    }
-
-                    return new OracleStringTypeMapping(
-                        storeTypePostfix == StoreTypePostfix.None ? unboundedName : baseName + "(" + size + ")",
-                        isAnsi ? DbType.AnsiString : (DbType?)null,
-                        !isAnsi,
-                        size,
-                        isFixedLength,
-                        storeTypePostfix);
-                }
-
-                if (clrType == typeof(byte[]))
-                {
-                    if (mappingInfo.IsRowVersion == true)
-                    {
-                        return _rowversion;
-                    }
-
-                    var size = mappingInfo.Size ?? (mappingInfo.IsKeyOrIndex ? (int?)900 : null);
-                    var storeTypePostfix = (StoreTypePostfix?)null;
-                    if (size > 2000)
-                    {
-                        size = null;
-                        storeTypePostfix = StoreTypePostfix.None;
-                    }
-
-                    return new OracleByteArrayTypeMapping(
-                        (size == -1 || size == null) ? "BLOB" : "RAW(" + size + ")",
-                        DbType.Binary,
-                        size,
-                        storeTypePostfix: storeTypePostfix);
-                }
-            }
-
-            return null;
-        }
+        // Indexes in SQL Server have a max size of 900 bytes
+        /// <summary>
+        ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
+        ///     directly from your code. This API may change or be removed in future releases.
+        /// </summary>
+        protected override bool RequiresKeyMapping(IProperty property)
+            => base.RequiresKeyMapping(property) || property.IsIndex();
     }
 }

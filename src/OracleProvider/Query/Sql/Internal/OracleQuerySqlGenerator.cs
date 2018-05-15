@@ -25,7 +25,7 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Query.Sql.Internal
 
         protected override string TypedTrueLiteral => "1";
         protected override string TypedFalseLiteral => "0";
-        protected override string AliasSeparator => " ";
+        //protected override string AliasSeparator => " ";
 
         protected override string GenerateOperator(Expression expression)
             => expression.NodeType == ExpressionType.Add
@@ -40,51 +40,51 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Query.Sql.Internal
             switch (binaryExpression.NodeType)
             {
                 case ExpressionType.And:
-                {
-                    Sql.Append("BITAND(");
+                    {
+                        Sql.Append("BITAND(");
 
-                    Visit(binaryExpression.Left);
+                        Visit(binaryExpression.Left);
 
-                    Sql.Append(", ");
+                        Sql.Append(", ");
 
-                    Visit(binaryExpression.Right);
+                        Visit(binaryExpression.Right);
 
-                    Sql.Append(")");
+                        Sql.Append(")");
 
-                    return binaryExpression;
-                }
+                        return binaryExpression;
+                    }
                 case ExpressionType.Or:
-                {
-                    Visit(binaryExpression.Left);
+                    {
+                        Visit(binaryExpression.Left);
 
-                    Sql.Append(" - BITAND(");
+                        Sql.Append(" - BITAND(");
 
-                    Visit(binaryExpression.Left);
+                        Visit(binaryExpression.Left);
 
-                    Sql.Append(", ");
+                        Sql.Append(", ");
 
-                    Visit(binaryExpression.Right);
+                        Visit(binaryExpression.Right);
 
-                    Sql.Append(") + ");
+                        Sql.Append(") + ");
 
-                    Visit(binaryExpression.Right);
+                        Visit(binaryExpression.Right);
 
-                    return binaryExpression;
-                }
+                        return binaryExpression;
+                    }
                 case ExpressionType.Modulo:
-                {
-                    Sql.Append("MOD(");
+                    {
+                        Sql.Append("MOD(");
 
-                    Visit(binaryExpression.Left);
+                        Visit(binaryExpression.Left);
 
-                    Sql.Append(", ");
+                        Sql.Append(", ");
 
-                    Visit(binaryExpression.Right);
+                        Visit(binaryExpression.Right);
 
-                    Sql.Append(")");
+                        Sql.Append(")");
 
-                    return binaryExpression;
-                }
+                        return binaryExpression;
+                    }
             }
 
             return base.VisitBinary(binaryExpression);
@@ -163,10 +163,10 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Query.Sql.Internal
             return fromSqlExpression;
         }
 
-        protected override void GeneratePseudoFromClause()
-        {
-            Sql.Append(" FROM DUAL");
-        }
+        //protected override void GeneratorPseudoFromClause()
+        //{
+        //    Sql.Append(" FROM DUAL");
+        //}
 
         public override Expression VisitCrossJoinLateral(CrossJoinLateralExpression crossJoinLateralExpression)
         {
@@ -184,67 +184,67 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Query.Sql.Internal
             switch (sqlFunctionExpression.FunctionName)
             {
                 case "EXTRACT":
-                {
-                    Sql.Append(sqlFunctionExpression.FunctionName);
-                    Sql.Append("(");
+                    {
+                        Sql.Append(sqlFunctionExpression.FunctionName);
+                        Sql.Append("(");
 
-                    Visit(sqlFunctionExpression.Arguments[0]);
+                        Visit(sqlFunctionExpression.Arguments[0]);
 
-                    Sql.Append(" FROM ");
+                        Sql.Append(" FROM ");
 
-                    Visit(sqlFunctionExpression.Arguments[1]);
+                        Visit(sqlFunctionExpression.Arguments[1]);
 
-                    Sql.Append(")");
+                        Sql.Append(")");
 
-                    return sqlFunctionExpression;
-                }
+                        return sqlFunctionExpression;
+                    }
                 case "CAST":
-                {
-                    Sql.Append(sqlFunctionExpression.FunctionName);
-                    Sql.Append("(");
+                    {
+                        Sql.Append(sqlFunctionExpression.FunctionName);
+                        Sql.Append("(");
 
-                    Visit(sqlFunctionExpression.Arguments[0]);
+                        Visit(sqlFunctionExpression.Arguments[0]);
 
-                    Sql.Append(" AS ");
+                        Sql.Append(" AS ");
 
-                    Visit(sqlFunctionExpression.Arguments[1]);
+                        Visit(sqlFunctionExpression.Arguments[1]);
 
-                    Sql.Append(")");
+                        Sql.Append(")");
 
-                    return sqlFunctionExpression;
-                }
+                        return sqlFunctionExpression;
+                    }
                 case "AVG" when sqlFunctionExpression.Type == typeof(decimal):
                 case "SUM" when sqlFunctionExpression.Type == typeof(decimal):
-                {
-                    Sql.Append("CAST(");
-
-                    base.VisitSqlFunction(sqlFunctionExpression);
-
-                    Sql.Append(" AS NUMBER(29,4))");
-
-                    return sqlFunctionExpression;
-                }
-                case "INSTR":
-                {
-                    if (sqlFunctionExpression.Arguments[1] is ParameterExpression parameterExpression
-                        && ParameterValues.TryGetValue(parameterExpression.Name, out var value)
-                        && ((string)value)?.Length == 0)
                     {
-                        return Visit(Expression.Constant(1));
+                        Sql.Append("CAST(");
+
+                        base.VisitSqlFunction(sqlFunctionExpression);
+
+                        Sql.Append(" AS NUMBER(29,4))");
+
+                        return sqlFunctionExpression;
                     }
+                case "INSTR":
+                    {
+                        if (sqlFunctionExpression.Arguments[1] is ParameterExpression parameterExpression
+                            && ParameterValues.TryGetValue(parameterExpression.Name, out var value)
+                            && (string)value == string.Empty)
+                        {
+                            return Visit(Expression.Constant(1));
+                        }
 
-                    break;
-                }
+                        break;
+                    }
                 case "ADD_MONTHS":
-                {
-                    Sql.Append("CAST(");
+                    {
+                        Sql.Append("CAST(");
 
-                    base.VisitSqlFunction(sqlFunctionExpression);
+                        base.VisitSqlFunction(sqlFunctionExpression);
 
-                    Sql.Append(" AS TIMESTAMP)");
+                        Sql.Append(" AS TIMESTAMP)");
 
-                    return sqlFunctionExpression;
-                }
+                        return sqlFunctionExpression;
+                    }
             }
 
             return base.VisitSqlFunction(sqlFunctionExpression);

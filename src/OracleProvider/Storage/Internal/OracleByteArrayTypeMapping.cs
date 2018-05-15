@@ -1,5 +1,5 @@
-// Copyright (c) .NET Foundation. All rights reserved.
-// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+// Copyright (c) Pomelo Foundation. All rights reserved.
+// Licensed under the MIT. See LICENSE in the project root for license information.
 
 using System;
 using System.Data;
@@ -7,84 +7,71 @@ using System.Data.Common;
 using System.Globalization;
 using System.Text;
 using JetBrains.Annotations;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
-namespace Microsoft.EntityFrameworkCore.Oracle.Storage.Internal
+namespace EFCore.Oracle.Storage.Internal
 {
+    /// <summary>
+    ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
+    ///     directly from your code. This API may change or be removed in future releases.
+    /// </summary>
     public class OracleByteArrayTypeMapping : ByteArrayTypeMapping
     {
-        private const int MaxSize = 8000;
-
         private readonly int _maxSpecificSize;
 
-        private readonly StoreTypePostfix? _storeTypePostfix;
-
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="OracleByteArrayTypeMapping" /> class.
+        /// </summary>
+        /// <param name="storeType"> The name of the database type. </param>
+        /// <param name="dbType"> The <see cref="System.Data.DbType" /> to be used. </param>
+        /// <param name="size"> The size of data the property is configured to store, or null if no size is configured. </param>
         public OracleByteArrayTypeMapping(
             [NotNull] string storeType,
             [CanBeNull] DbType? dbType = System.Data.DbType.Binary,
-            int? size = null,
-            bool fixedLength = false,
-            ValueComparer comparer = null,
-            StoreTypePostfix? storeTypePostfix = null)
-            : this(
-                new RelationalTypeMappingParameters(
-                    new CoreTypeMappingParameters(typeof(byte[]), null, comparer),
-                    storeType,
-                    GetStoreTypePostfix(storeTypePostfix, size),
-                    dbType,
-                    size: size,
-                    fixedLength: fixedLength))
+            int? size = null)
+            : base(storeType, dbType, size)
         {
-            _storeTypePostfix = storeTypePostfix;
+            _maxSpecificSize = CalculateSize(size);
         }
-
-        protected OracleByteArrayTypeMapping(RelationalTypeMappingParameters parameters)
-            : base(parameters)
-        {
-            _maxSpecificSize = CalculateSize(parameters.Size);
-        }
-
-        private static StoreTypePostfix GetStoreTypePostfix(StoreTypePostfix? storeTypePostfix, int? size)
-            => storeTypePostfix
-               ?? (size != null && size <= MaxSize ? StoreTypePostfix.Size : StoreTypePostfix.None);
 
         private static int CalculateSize(int? size)
-            => size.HasValue && size < MaxSize ? size.Value : MaxSize;
+            => size.HasValue && size < 8000 ? size.Value : 8000;
 
-        public override RelationalTypeMapping Clone(string storeType, int? size)
-            => new OracleByteArrayTypeMapping(
-                Parameters.WithStoreTypeAndSize(storeType, size, GetStoreTypePostfix(_storeTypePostfix, size)));
-
-        public override CoreTypeMapping Clone(ValueConverter converter)
-            => new OracleByteArrayTypeMapping(Parameters.WithComposedConverter(converter));
-
+        /// <summary>
+        ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
+        ///     directly from your code. This API may change or be removed in future releases.
+        /// </summary>
         protected override void ConfigureParameter(DbParameter parameter)
         {
-            var value = parameter.Value;
-            var length = (value as byte[])?.Length;
+            // For strings and byte arrays, set the max length to the size facet if specified, or
+            // 8000 bytes if no size facet specified, if the data will fit so as to avoid query cache
+            // fragmentation by setting lots of different Size values otherwise always set to
+            // -1 (unbounded) to avoid SQL client size inference.
 
-            parameter.Size
-                = value == null
-                  || value == DBNull.Value
-                  || length != null
-                  && length <= _maxSpecificSize
-                    ? _maxSpecificSize
-                    : parameter.Size;
+            var value = parameter.Value;
+            var length = (value as string)?.Length ?? (value as byte[])?.Length;
+
+            parameter.Size = value == null || value == DBNull.Value || length != null && length <= _maxSpecificSize
+                ? _maxSpecificSize
+                : -1;
         }
 
+        /// <summary>
+        ///     Generates the SQL representation of a literal value.
+        /// </summary>
+        /// <param name="value">The literal value.</param>
+        /// <returns>
+        ///     The generated string.
+        /// </returns>
         protected override string GenerateNonNullSqlLiteral(object value)
         {
             var builder = new StringBuilder();
-            builder.Append("'");
+            builder.Append("0x");
 
             foreach (var @byte in (byte[])value)
             {
                 builder.Append(@byte.ToString("X2", CultureInfo.InvariantCulture));
             }
-
-            builder.Append("'");
 
             return builder.ToString();
         }
