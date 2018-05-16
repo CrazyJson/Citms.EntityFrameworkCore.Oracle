@@ -25,10 +25,7 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Query.Sql.Internal
 
         protected override string TypedTrueLiteral => "1";
         protected override string TypedFalseLiteral => "0";
-
-        //protected override string AliasSeparator => " ";
-
-        protected override bool SupportsSchemas => false;
+        //protected override bool SupportsSchemas => false;
 
         protected override string GenerateOperator(Expression expression)
             => expression.NodeType == ExpressionType.Add
@@ -166,10 +163,150 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Query.Sql.Internal
             return fromSqlExpression;
         }
 
-        //protected override void GeneratorPseudoFromClause()
-        //{
-        //    Sql.Append(" FROM DUAL");
-        //}
+        public override Expression VisitSelect(SelectExpression selectExpression)
+        {
+            Check.NotNull(selectExpression, nameof(selectExpression));
+
+            IDisposable subQueryIndent = null;
+
+            if (selectExpression.Alias != null)
+            {
+                Sql.AppendLine("(");
+
+                subQueryIndent = Sql.Indent();
+            }
+
+            Sql.Append("SELECT ");
+
+            if (selectExpression.IsDistinct)
+            {
+                Sql.Append("DISTINCT ");
+            }
+
+            GenerateTop(selectExpression);
+
+            var projectionAdded = false;
+
+            if (selectExpression.IsProjectStar)
+            {
+                var tableAlias = selectExpression.ProjectStarTable.Alias;
+
+                Sql
+                    .Append(SqlGenerator.DelimitIdentifier(tableAlias))
+                    .Append(".*");
+
+                projectionAdded = true;
+            }
+
+            if (selectExpression.Projection.Any())
+            {
+                if (selectExpression.IsProjectStar)
+                {
+                    Sql.Append(", ");
+                }
+
+                ProcessExpressionList(selectExpression.Projection, GenerateProjection);
+
+                projectionAdded = true;
+            }
+
+            if (!projectionAdded)
+            {
+                Sql.Append("1");
+            }
+
+            if (selectExpression.Tables.Any())
+            {
+                Sql.AppendLine()
+                    .Append("FROM ");
+
+                ProcessExpressionList(selectExpression.Tables, sql => sql.AppendLine());
+            }
+            else
+            {
+                Sql.Append(" FROM DUAL");
+            }
+
+            if (selectExpression.Predicate != null)
+            {
+                GeneratePredicate(selectExpression.Predicate);
+            }
+
+            if (selectExpression.OrderBy.Any())
+            {
+                Sql.AppendLine();
+
+                GenerateOrderBy(selectExpression.OrderBy);
+            }
+
+            GenerateLimitOffset(selectExpression);
+
+            if (subQueryIndent != null)
+            {
+                subQueryIndent.Dispose();
+
+                Sql.AppendLine()
+                    .Append(")");
+
+                if (selectExpression.Alias.Length > 0)
+                {
+                    Sql.Append(" ")
+                        .Append(SqlGenerator.DelimitIdentifier(selectExpression.Alias));
+                }
+            }
+
+            return selectExpression;
+        }
+
+        private void ProcessExpressionList(
+            IReadOnlyList<Expression> expressions, Action<IRelationalCommandBuilder> joinAction = null)
+            => ProcessExpressionList(expressions, e => Visit(e), joinAction);
+
+        private void ProcessExpressionList<T>(
+            IReadOnlyList<T> items, Action<T> itemAction, Action<IRelationalCommandBuilder> joinAction = null)
+        {
+            joinAction = joinAction ?? (isb => isb.Append(", "));
+
+            for (var i = 0; i < items.Count; i++)
+            {
+                if (i > 0)
+                {
+                    joinAction(Sql);
+                }
+
+                itemAction(items[i]);
+            }
+        }
+
+        public override Expression VisitAlias(AliasExpression aliasExpression)
+        {
+            Check.NotNull(aliasExpression, nameof(aliasExpression));
+
+            Visit(aliasExpression.Expression);
+
+            if (aliasExpression.Alias != null)
+            {
+                Sql.Append(" ");
+            }
+
+            if (aliasExpression.Alias != null)
+            {
+                Sql.Append(SqlGenerator.DelimitIdentifier(aliasExpression.Alias));
+            }
+
+            return aliasExpression;
+        }
+
+        public override Expression VisitTable(TableExpression tableExpression)
+        {
+            Check.NotNull(tableExpression, nameof(tableExpression));
+
+            Sql.Append(SqlGenerator.DelimitIdentifier(tableExpression.Table))
+                .Append(" ")
+                .Append(SqlGenerator.DelimitIdentifier(tableExpression.Alias));
+
+            return tableExpression;
+        }
 
         public override Expression VisitCrossJoinLateral(CrossJoinLateralExpression crossJoinLateralExpression)
         {
@@ -223,7 +360,7 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Query.Sql.Internal
 
                         base.VisitSqlFunction(sqlFunctionExpression);
 
-                        Sql.Append(" AS NUMBER(29,4))");
+                        Sql.Append(" AS DECIMAL(29,4))");
 
                         return sqlFunctionExpression;
                     }

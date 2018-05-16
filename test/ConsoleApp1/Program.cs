@@ -11,8 +11,11 @@ namespace ConsoleApp1
             using (CommonDBContext db = new CommonDBContext())
             {
                 int i = db.Spotting.Count();
+
+                var list = db.Spotting.ToList();
             }
             Console.WriteLine("Hello World!");
+            Console.Read();
         }
     }
 }
