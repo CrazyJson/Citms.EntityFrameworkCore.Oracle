@@ -2,14 +2,10 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data;
-using System.Linq;
 using JetBrains.Annotations;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Oracle.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Utilities;
 
@@ -51,13 +47,13 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Storage.Internal
             = new ByteTypeMapping("NUMBER(3)", DbType.Byte);
 
         private readonly OracleStringTypeMapping _fixedLengthUnicodeString
-            = new OracleStringTypeMapping("NCHAR", dbType: DbType.String, unicode: true, fixedLength: true);
+                   = new OracleStringTypeMapping("NCHAR", dbType: DbType.String, unicode: true);
 
         private readonly OracleStringTypeMapping _variableLengthUnicodeString
             = new OracleStringTypeMapping("NVARCHAR2", dbType: null, unicode: true);
 
         private readonly OracleStringTypeMapping _fixedLengthAnsiString
-            = new OracleStringTypeMapping("CHAR", dbType: DbType.AnsiString, fixedLength: true);
+                = new OracleStringTypeMapping("CHAR", dbType: DbType.AnsiString);
 
         private readonly OracleStringTypeMapping _variableLengthAnsiString
             = new OracleStringTypeMapping("VARCHAR2", dbType: DbType.AnsiString);

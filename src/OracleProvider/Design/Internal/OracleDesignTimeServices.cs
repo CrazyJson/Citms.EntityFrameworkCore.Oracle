@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.EntityFrameworkCore.Design.Internal;
 using Microsoft.EntityFrameworkCore.Oracle.Scaffolding.Internal;
 using Microsoft.EntityFrameworkCore.Oracle.Storage.Internal;
 using Microsoft.EntityFrameworkCore.Scaffolding;

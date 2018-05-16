@@ -1,12 +1,13 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using Citms.EntityFrameworkCore.OracleProperties;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using Microsoft.EntityFrameworkCore.Oracle.Internal;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace Microsoft.EntityFrameworkCore.Internal
 {
@@ -26,13 +27,10 @@ namespace Microsoft.EntityFrameworkCore.Internal
         {
             var definition = OracleStrings.LogDefaultDecimalTypeColumn;
 
-            var warningBehavior = definition.GetLogBehavior(diagnostics);
-            if (definition.GetLogBehavior(diagnostics) != WarningBehavior.Ignore)
+            // Checking for enabled here to avoid string formatting if not needed.
+            if (diagnostics.GetLogBehavior(definition.EventId, definition.Level) != WarningBehavior.Ignore)
             {
-                definition.Log(
-                    diagnostics,
-                    warningBehavior,
-                    property.Name, property.DeclaringEntityType.DisplayName());
+                definition.Log(diagnostics, property.Name, property.DeclaringEntityType.DisplayName());
             }
 
             if (diagnostics.DiagnosticSource.IsEnabled(definition.EventId.Name))
@@ -65,13 +63,10 @@ namespace Microsoft.EntityFrameworkCore.Internal
         {
             var definition = OracleStrings.LogByteIdentityColumn;
 
-            var warningBehavior = definition.GetLogBehavior(diagnostics);
-            if (warningBehavior != WarningBehavior.Ignore)
+            // Checking for enabled here to avoid string formatting if not needed.
+            if (diagnostics.GetLogBehavior(definition.EventId, definition.Level) != WarningBehavior.Ignore)
             {
-                definition.Log(
-                    diagnostics,
-                    warningBehavior,
-                    property.Name, property.DeclaringEntityType.DisplayName());
+                definition.Log(diagnostics, property.Name, property.DeclaringEntityType.DisplayName());
             }
 
             if (diagnostics.DiagnosticSource.IsEnabled(definition.EventId.Name))
@@ -94,6 +89,7 @@ namespace Microsoft.EntityFrameworkCore.Internal
                 p.Property.DeclaringEntityType.DisplayName());
         }
 
+
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
@@ -112,14 +108,16 @@ namespace Microsoft.EntityFrameworkCore.Internal
             [CanBeNull] string defaultValue,
             [CanBeNull] string computedValue)
         {
+            // No DiagnosticsSource events because these are purely design-time messages
+
             var definition = OracleStrings.LogFoundColumn;
 
-            var warningBehavior = definition.GetLogBehavior(diagnostics);
-            if (warningBehavior != WarningBehavior.Ignore)
+            Debug.Assert(LogLevel.Debug == definition.Level);
+
+            if (diagnostics.GetLogBehavior(definition.EventId, definition.Level) != WarningBehavior.Ignore)
             {
                 definition.Log(
                     diagnostics,
-                    warningBehavior,
                     l => l.LogDebug(
                         definition.EventId,
                         null,
@@ -136,7 +134,6 @@ namespace Microsoft.EntityFrameworkCore.Internal
                         defaultValue,
                         computedValue));
             }
-            // No DiagnosticsSource events because these are purely design-time messages
         }
 
         /// <summary>
@@ -149,19 +146,8 @@ namespace Microsoft.EntityFrameworkCore.Internal
             [NotNull] string tableName,
             [NotNull] string principalTableName,
             [NotNull] string onDeleteAction)
-        {
-            var definition = OracleStrings.LogFoundForeignKey;
-
-            var warningBehavior = definition.GetLogBehavior(diagnostics);
-            if (warningBehavior != WarningBehavior.Ignore)
-            {
-                definition.Log(
-                    diagnostics,
-                    warningBehavior,
-                    foreignKeyName, tableName, principalTableName, onDeleteAction);
-            }
             // No DiagnosticsSource events because these are purely design-time messages
-        }
+            => OracleStrings.LogFoundForeignKey.Log(diagnostics, foreignKeyName, tableName, principalTableName, onDeleteAction);
 
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
@@ -170,19 +156,8 @@ namespace Microsoft.EntityFrameworkCore.Internal
         public static void DefaultSchemaFound(
             [NotNull] this IDiagnosticsLogger<DbLoggerCategory.Scaffolding> diagnostics,
             [NotNull] string schemaName)
-        {
-            var definition = OracleStrings.LogFoundDefaultSchema;
-
-            var warningBehavior = definition.GetLogBehavior(diagnostics);
-            if (warningBehavior != WarningBehavior.Ignore)
-            {
-                definition.Log(
-                    diagnostics,
-                    warningBehavior,
-                    schemaName);
-            }
             // No DiagnosticsSource events because these are purely design-time messages
-        }
+            => OracleStrings.LogFoundDefaultSchema.Log(diagnostics, schemaName);
 
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
@@ -192,19 +167,8 @@ namespace Microsoft.EntityFrameworkCore.Internal
             [NotNull] this IDiagnosticsLogger<DbLoggerCategory.Scaffolding> diagnostics,
             [NotNull] string primaryKeyName,
             [NotNull] string tableName)
-        {
-            var definition = OracleStrings.LogFoundPrimaryKey;
-
-            var warningBehavior = definition.GetLogBehavior(diagnostics);
-            if (warningBehavior != WarningBehavior.Ignore)
-            {
-                definition.Log(
-                    diagnostics,
-                    warningBehavior,
-                    primaryKeyName, tableName);
-            }
             // No DiagnosticsSource events because these are purely design-time messages
-        }
+            => OracleStrings.LogFoundPrimaryKey.Log(diagnostics, primaryKeyName, tableName);
 
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
@@ -214,19 +178,8 @@ namespace Microsoft.EntityFrameworkCore.Internal
             [NotNull] this IDiagnosticsLogger<DbLoggerCategory.Scaffolding> diagnostics,
             [NotNull] string uniqueConstraintName,
             [NotNull] string tableName)
-        {
-            var definition = OracleStrings.LogFoundUniqueConstraint;
-
-            var warningBehavior = definition.GetLogBehavior(diagnostics);
-            if (warningBehavior != WarningBehavior.Ignore)
-            {
-                definition.Log(
-                    diagnostics,
-                    warningBehavior,
-                    uniqueConstraintName, tableName);
-            }
             // No DiagnosticsSource events because these are purely design-time messages
-        }
+            => OracleStrings.LogFoundUniqueConstraint.Log(diagnostics, uniqueConstraintName, tableName);
 
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
@@ -237,19 +190,8 @@ namespace Microsoft.EntityFrameworkCore.Internal
             [NotNull] string indexName,
             [NotNull] string tableName,
             bool unique)
-        {
-            var definition = OracleStrings.LogFoundIndex;
-
-            var warningBehavior = definition.GetLogBehavior(diagnostics);
-            if (warningBehavior != WarningBehavior.Ignore)
-            {
-                definition.Log(
-                    diagnostics,
-                    warningBehavior,
-                    indexName, tableName, unique);
-            }
             // No DiagnosticsSource events because these are purely design-time messages
-        }
+            => OracleStrings.LogFoundIndex.Log(diagnostics, indexName, tableName, unique);
 
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
@@ -260,19 +202,8 @@ namespace Microsoft.EntityFrameworkCore.Internal
             [CanBeNull] string foreignKeyName,
             [CanBeNull] string tableName,
             [CanBeNull] string principalTableName)
-        {
-            var definition = OracleStrings.LogPrincipalTableNotInSelectionSet;
-
-            var warningBehavior = definition.GetLogBehavior(diagnostics);
-            if (warningBehavior != WarningBehavior.Ignore)
-            {
-                definition.Log(
-                    diagnostics,
-                    warningBehavior,
-                    foreignKeyName, tableName, principalTableName);
-            }
             // No DiagnosticsSource events because these are purely design-time messages
-        }
+            => OracleStrings.LogPrincipalTableNotInSelectionSet.Log(diagnostics, foreignKeyName, tableName, principalTableName);
 
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
@@ -284,19 +215,8 @@ namespace Microsoft.EntityFrameworkCore.Internal
             [NotNull] string tableName,
             [NotNull] string principalColumnName,
             [NotNull] string principalTableName)
-        {
-            var definition = OracleStrings.LogPrincipalColumnNotFound;
-
-            var warningBehavior = definition.GetLogBehavior(diagnostics);
-            if (warningBehavior != WarningBehavior.Ignore)
-            {
-                definition.Log(
-                    diagnostics,
-                    warningBehavior,
-                    foreignKeyName, tableName, principalColumnName, principalTableName);
-            }
             // No DiagnosticsSource events because these are purely design-time messages
-        }
+            => OracleStrings.LogPrincipalColumnNotFound.Log(diagnostics, foreignKeyName, tableName, principalColumnName, principalTableName);
 
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
@@ -305,19 +225,8 @@ namespace Microsoft.EntityFrameworkCore.Internal
         public static void MissingSchemaWarning(
             [NotNull] this IDiagnosticsLogger<DbLoggerCategory.Scaffolding> diagnostics,
             [CanBeNull] string schemaName)
-        {
-            var definition = OracleStrings.LogMissingSchema;
-
-            var warningBehavior = definition.GetLogBehavior(diagnostics);
-            if (warningBehavior != WarningBehavior.Ignore)
-            {
-                definition.Log(
-                    diagnostics,
-                    warningBehavior,
-                    schemaName);
-            }
             // No DiagnosticsSource events because these are purely design-time messages
-        }
+            => OracleStrings.LogMissingSchema.Log(diagnostics, schemaName);
 
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
@@ -326,19 +235,8 @@ namespace Microsoft.EntityFrameworkCore.Internal
         public static void MissingTableWarning(
             [NotNull] this IDiagnosticsLogger<DbLoggerCategory.Scaffolding> diagnostics,
             [CanBeNull] string tableName)
-        {
-            var definition = OracleStrings.LogMissingTable;
-
-            var warningBehavior = definition.GetLogBehavior(diagnostics);
-            if (warningBehavior != WarningBehavior.Ignore)
-            {
-                definition.Log(
-                    diagnostics,
-                    warningBehavior,
-                    tableName);
-            }
             // No DiagnosticsSource events because these are purely design-time messages
-        }
+            => OracleStrings.LogMissingTable.Log(diagnostics, tableName);
 
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
@@ -347,18 +245,7 @@ namespace Microsoft.EntityFrameworkCore.Internal
         public static void TableFound(
             [NotNull] this IDiagnosticsLogger<DbLoggerCategory.Scaffolding> diagnostics,
             [NotNull] string tableName)
-        {
-            var definition = OracleStrings.LogFoundTable;
-
-            var warningBehavior = definition.GetLogBehavior(diagnostics);
-            if (warningBehavior != WarningBehavior.Ignore)
-            {
-                definition.Log(
-                    diagnostics,
-                    warningBehavior,
-                    tableName);
-            }
             // No DiagnosticsSource events because these are purely design-time messages
-        }
+            => OracleStrings.LogFoundTable.Log(diagnostics, tableName);
     }
 }

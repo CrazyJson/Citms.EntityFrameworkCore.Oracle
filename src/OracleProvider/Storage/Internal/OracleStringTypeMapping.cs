@@ -6,73 +6,45 @@ using System.Data;
 using System.Data.Common;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Microsoft.EntityFrameworkCore.Oracle.Storage.Internal
 {
     public class OracleStringTypeMapping : StringTypeMapping
     {
-        private const int UnicodeMax = 2000;
-        private const int AnsiMax = 4000;
-
         private readonly int _maxSpecificSize;
 
-        private readonly StoreTypePostfix? _storeTypePostfix;
-
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="OracleStringTypeMapping" /> class.
+        /// </summary>
+        /// <param name="storeType"> The name of the database type. </param>
+        /// <param name="dbType"> The <see cref="DbType" /> to be used. </param>
+        /// <param name="unicode"> A value indicating whether the type should handle Unicode data or not. </param>
+        /// <param name="size"> The size of data the property is configured to store, or null if no size is configured. </param>
         public OracleStringTypeMapping(
             [NotNull] string storeType,
             [CanBeNull] DbType? dbType,
             bool unicode = false,
-            int? size = null,
-            bool fixedLength = false,
-            StoreTypePostfix? storeTypePostfix = null)
-            : this(
-                new RelationalTypeMappingParameters(
-                    new CoreTypeMappingParameters(typeof(string)),
-                    storeType,
-                    GetStoreTypePostfix(storeTypePostfix, unicode, size),
-                    dbType,
-                    unicode,
-                    size,
-                    fixedLength))
+            int? size = null)
+            : base(storeType, dbType, unicode, size)
         {
-            _storeTypePostfix = storeTypePostfix;
+            _maxSpecificSize = CalculateSize(unicode, size);
         }
-
-        protected OracleStringTypeMapping(RelationalTypeMappingParameters parameters)
-            : base(parameters)
-        {
-            _maxSpecificSize = CalculateSize(parameters.Unicode, parameters.Size);
-        }
-
-        private static StoreTypePostfix GetStoreTypePostfix(
-            StoreTypePostfix? storeTypePostfix,
-            bool unicode,
-            int? size)
-            => storeTypePostfix
-               ?? (unicode
-                   ? size.HasValue && size <= UnicodeMax
-                       ? StoreTypePostfix.Size
-                       : StoreTypePostfix.None
-                   : size.HasValue && size <= AnsiMax
-                       ? StoreTypePostfix.Size
-                       : StoreTypePostfix.None);
 
         private static int CalculateSize(bool unicode, int? size)
             => unicode
-                ? size.HasValue && size <= UnicodeMax
+                ? size.HasValue && size < 2000
                     ? size.Value
-                    : UnicodeMax
-                : size.HasValue && size <= AnsiMax
+                    : 2000
+                : size.HasValue && size < 4000
                     ? size.Value
-                    : AnsiMax;
+                    : 4000;
 
         public override RelationalTypeMapping Clone(string storeType, int? size)
             => new OracleStringTypeMapping(
-                Parameters.WithStoreTypeAndSize(storeType, size, GetStoreTypePostfix(_storeTypePostfix, IsUnicode, size)));
-
-        public override CoreTypeMapping Clone(ValueConverter converter)
-            => new OracleStringTypeMapping(Parameters.WithComposedConverter(converter));
+                storeType,
+                DbType,
+                IsUnicode,
+                size);
 
         protected override void ConfigureParameter(DbParameter parameter)
         {
@@ -82,7 +54,7 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Storage.Internal
             // 0 to avoid SQL client size inference.
 
             var value = parameter.Value;
-            var length = (value as string)?.Length;
+            var length = (value as string)?.Length ?? (value as byte[])?.Length;
 
             try
             {
@@ -97,6 +69,13 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Storage.Internal
             }
         }
 
+        /// <summary>
+        ///     Generates the SQL representation of a literal value.
+        /// </summary>
+        /// <param name="value">The literal value.</param>
+        /// <returns>
+        ///     The generated string.
+        /// </returns>
         protected override string GenerateNonNullSqlLiteral(object value)
             => IsUnicode
                 ? $"N'{EscapeSqlLiteral((string)value)}'" // Interpolation okay; strings

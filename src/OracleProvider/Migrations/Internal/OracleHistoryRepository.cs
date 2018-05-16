@@ -1,11 +1,11 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Text;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.EntityFrameworkCore.Migrations;
-using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Utilities;
 
 namespace Microsoft.EntityFrameworkCore.Oracle.Migrations.Internal
@@ -33,21 +33,20 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Migrations.Internal
         {
             get
             {
-                var stringTypeMapping = Dependencies.TypeMappingSource.GetMapping(typeof(string));
                 var builder = new StringBuilder();
 
-                builder
-                    .Append("SELECT t.table_name ")
-                    .Append("FROM all_tables t ")
-                    .Append("WHERE t.table_name = ")
-                    .Append(stringTypeMapping.GenerateSqlLiteral(TableName));
+                builder.Append("SELECT OBJECT_ID(N'");
 
                 if (TableSchema != null)
                 {
                     builder
-                        .Append(" AND t.tablespace_name = ")
-                        .Append(stringTypeMapping.GenerateSqlLiteral(TableSchema));
+                        .Append(SqlGenerationHelper.EscapeLiteral(TableSchema))
+                        .Append(".");
                 }
+
+                builder
+                    .Append(SqlGenerationHelper.EscapeLiteral(TableName))
+                    .Append("');");
 
                 return builder.ToString();
             }
@@ -57,7 +56,48 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Migrations.Internal
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
-        protected override bool InterpretExistsResult(object value) => value != null;
+        protected override bool InterpretExistsResult(object value) => value != DBNull.Value;
+
+        /// <summary>
+        ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
+        ///     directly from your code. This API may change or be removed in future releases.
+        /// </summary>
+        public override string GetInsertScript(HistoryRow row)
+        {
+            Check.NotNull(row, nameof(row));
+
+            return new StringBuilder().Append("INSERT INTO ")
+                .Append(SqlGenerationHelper.DelimitIdentifier(TableName, TableSchema))
+                .Append(" (")
+                .Append(SqlGenerationHelper.DelimitIdentifier(MigrationIdColumnName))
+                .Append(", ")
+                .Append(SqlGenerationHelper.DelimitIdentifier(ProductVersionColumnName))
+                .AppendLine(")")
+                .Append("VALUES (N'")
+                .Append(SqlGenerationHelper.EscapeLiteral(row.MigrationId))
+                .Append("', N'")
+                .Append(SqlGenerationHelper.EscapeLiteral(row.ProductVersion))
+                .AppendLine("');")
+                .ToString();
+        }
+
+        /// <summary>
+        ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
+        ///     directly from your code. This API may change or be removed in future releases.
+        /// </summary>
+        public override string GetDeleteScript(string migrationId)
+        {
+            Check.NotEmpty(migrationId, nameof(migrationId));
+
+            return new StringBuilder().Append("DELETE FROM ")
+                .AppendLine(SqlGenerationHelper.DelimitIdentifier(TableName, TableSchema))
+                .Append("WHERE ")
+                .Append(SqlGenerationHelper.DelimitIdentifier(MigrationIdColumnName))
+                .Append(" = N'")
+                .Append(SqlGenerationHelper.EscapeLiteral(migrationId))
+                .AppendLine("';")
+                .ToString();
+        }
 
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
@@ -67,16 +107,26 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Migrations.Internal
         {
             var builder = new IndentedStringBuilder();
 
-            return builder.Append(
-@"BEGIN
-  EXECUTE IMMEDIATE '" + GetCreateScript() + @"';
-EXCEPTION
-WHEN OTHERS THEN
-  IF(SQLCODE != -942)THEN
-      RAISE;
-  END IF;
-END;").ToString();
+            builder.Append("IF OBJECT_ID(N'");
 
+            if (TableSchema != null)
+            {
+                builder
+                    .Append(SqlGenerationHelper.EscapeLiteral(TableSchema))
+                    .Append(".");
+            }
+
+            builder
+                .Append(SqlGenerationHelper.EscapeLiteral(TableName))
+                .AppendLine("') IS NULL")
+                .AppendLine("BEGIN");
+            using (builder.Indent())
+            {
+                builder.AppendLines(GetCreateScript());
+            }
+            builder.AppendLine("END;");
+
+            return builder.ToString();
         }
 
         /// <summary>
@@ -87,19 +137,15 @@ END;").ToString();
         {
             Check.NotEmpty(migrationId, nameof(migrationId));
 
-            var stringTypeMapping = Dependencies.TypeMappingSource.GetMapping(typeof(string));
-
             return new StringBuilder()
-                .AppendLine("DECLARE")
-                .AppendLine("    v_Count INTEGER;")
-                .AppendLine("BEGIN")
-                .Append("SELECT COUNT(*) INTO v_Count FROM ")
+                .Append("IF NOT EXISTS(SELECT * FROM ")
                 .Append(SqlGenerationHelper.DelimitIdentifier(TableName, TableSchema))
                 .Append(" WHERE ")
                 .Append(SqlGenerationHelper.DelimitIdentifier(MigrationIdColumnName))
-                .Append(" = ")
-                .AppendLine(stringTypeMapping.GenerateSqlLiteral(migrationId))
-                .AppendLine("IF v_Count = 0 THEN")
+                .Append(" = N'")
+                .Append(SqlGenerationHelper.EscapeLiteral(migrationId))
+                .AppendLine("')")
+                .Append("BEGIN")
                 .ToString();
         }
 
@@ -111,19 +157,15 @@ END;").ToString();
         {
             Check.NotEmpty(migrationId, nameof(migrationId));
 
-            var stringTypeMapping = Dependencies.TypeMappingSource.GetMapping(typeof(string));
-
             return new StringBuilder()
-                .AppendLine("DECLARE")
-                .AppendLine("    v_Count INTEGER;")
-                .AppendLine("BEGIN")
-                .Append("SELECT COUNT(*) INTO v_Count FROM ")
+                .Append("IF EXISTS(SELECT * FROM ")
                 .Append(SqlGenerationHelper.DelimitIdentifier(TableName, TableSchema))
                 .Append(" WHERE ")
                 .Append(SqlGenerationHelper.DelimitIdentifier(MigrationIdColumnName))
-                .Append(" = ")
-                .AppendLine(stringTypeMapping.GenerateSqlLiteral(migrationId))
-                .AppendLine("IF v_Count = 1 THEN")
+                .Append(" = N'")
+                .Append(SqlGenerationHelper.EscapeLiteral(migrationId))
+                .AppendLine("')")
+                .Append("BEGIN")
                 .ToString();
         }
 
@@ -131,10 +173,6 @@ END;").ToString();
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
-        public override string GetEndIfScript()
-            => new StringBuilder()
-                .AppendLine(" END IF")
-                .AppendLine("END")
-                .ToString();
+        public override string GetEndIfScript() => "END;" + Environment.NewLine;
     }
 }

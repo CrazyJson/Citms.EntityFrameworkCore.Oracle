@@ -14,7 +14,7 @@ namespace ConsoleApp1
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseOracle("DATA SOURCE=127.0.0.1:1521/orcl;PASSWORD=95938;PERSIST SECURITY INFO=True;USER ID=hsepp");
+            optionsBuilder.UseOracle("DATA SOURCE=192.168.0.245:1521/tjims;PASSWORD=citms;PERSIST SECURITY INFO=True;USER ID=hsepp");
             base.OnConfiguring(optionsBuilder);
         }
 

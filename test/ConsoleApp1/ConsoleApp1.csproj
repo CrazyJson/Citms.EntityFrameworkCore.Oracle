@@ -10,7 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Citms.EntityFrameworkCore.Oracle\Citms.EntityFrameworkCore.Oracle.csproj" />
+    <ProjectReference Include="..\..\src\OracleProvider\OracleProvider.csproj" />
   </ItemGroup>
 
 </Project>

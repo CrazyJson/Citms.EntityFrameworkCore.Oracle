@@ -25,7 +25,10 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Query.Sql.Internal
 
         protected override string TypedTrueLiteral => "1";
         protected override string TypedFalseLiteral => "0";
+
         //protected override string AliasSeparator => " ";
+
+        protected override bool SupportsSchemas => false;
 
         protected override string GenerateOperator(Expression expression)
             => expression.NodeType == ExpressionType.Add

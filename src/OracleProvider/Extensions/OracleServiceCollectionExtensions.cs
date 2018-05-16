@@ -20,7 +20,6 @@ using Microsoft.EntityFrameworkCore.Query.ExpressionTranslators;
 using Microsoft.EntityFrameworkCore.Query.Sql;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Update;
-using Microsoft.EntityFrameworkCore.Update.Internal;
 using Microsoft.EntityFrameworkCore.Utilities;
 using Microsoft.EntityFrameworkCore.ValueGeneration;
 
@@ -50,7 +49,7 @@ namespace Microsoft.Extensions.DependencyInjection
         ///           public void ConfigureServices(IServiceCollection services)
         ///           {
         ///               var connectionString = "connection string to database";
-        ///
+        /// 
         ///               services
         ///                   .AddEntityFrameworkOracle()
         ///                   .AddDbContext&lt;MyContext&gt;((serviceProvider, options) =>
@@ -70,13 +69,12 @@ namespace Microsoft.Extensions.DependencyInjection
             var builder = new EntityFrameworkRelationalServicesBuilder(serviceCollection)
                 .TryAdd<IDatabaseProvider, DatabaseProvider<OracleOptionsExtension>>()
                 .TryAdd<IValueGeneratorCache>(p => p.GetService<IOracleValueGeneratorCache>())
-                .TryAdd<IRelationalTypeMappingSource, OracleTypeMapper>()
+                .TryAdd<IRelationalTypeMapper, OracleTypeMapper>()
                 .TryAdd<ISqlGenerationHelper, OracleSqlGenerationHelper>()
                 .TryAdd<IMigrationsAnnotationProvider, OracleMigrationsAnnotationProvider>()
                 .TryAdd<IModelValidator, OracleModelValidator>()
                 .TryAdd<IConventionSetBuilder, OracleConventionSetBuilder>()
                 .TryAdd<IUpdateSqlGenerator, OracleUpdateSqlGenerator>()
-                .TryAdd<ISingletonUpdateSqlGenerator, OracleUpdateSqlGenerator>()
                 .TryAdd<IModificationCommandBatchFactory, OracleModificationCommandBatchFactory>()
                 .TryAdd<IValueGeneratorSelector, OracleValueGeneratorSelector>()
                 .TryAdd<IRelationalConnection>(p => p.GetService<IOracleConnection>())
