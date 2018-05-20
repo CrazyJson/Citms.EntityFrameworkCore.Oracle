@@ -99,6 +99,7 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Storage.Internal
                         async: false,
                         startTime: startTime);
 
+
                     object result;
                     var readerOpen = false;
 

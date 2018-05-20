@@ -104,23 +104,23 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Query.Sql.Internal
             }
         }
 
-        protected override void GenerateOrdering(Ordering ordering)
-        {
-            Check.NotNull(ordering, nameof(ordering));
+        //protected override void GenerateOrdering(Ordering ordering)
+        //{
+        //    Check.NotNull(ordering, nameof(ordering));
 
-            var orderingExpression = ordering.Expression;
+        //    var orderingExpression = ordering.Expression;
 
-            if (!(orderingExpression.NodeType == ExpressionType.Constant
-                  || orderingExpression.NodeType == ExpressionType.Parameter))
-            {
-                base.GenerateOrdering(ordering);
+        //    if (!(orderingExpression.NodeType == ExpressionType.Constant
+        //          || orderingExpression.NodeType == ExpressionType.Parameter))
+        //    {
+        //        base.GenerateOrdering(ordering);
 
-                if (ordering.OrderingDirection == OrderingDirection.Asc)
-                {
-                    Sql.Append(" NULLS FIRST");
-                }
-            }
-        }
+        //        if (ordering.OrderingDirection == OrderingDirection.Asc)
+        //        {
+        //            Sql.Append(" NULLS FIRST");
+        //        }
+        //    }
+        //}
 
         protected override void GenerateTop(SelectExpression selectExpression)
         {
@@ -131,14 +131,27 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Query.Sql.Internal
         {
             Check.NotNull(selectExpression, nameof(selectExpression));
 
-            if (selectExpression.Limit != null
-                && selectExpression.Offset == null)
+            if (RequiresRowNumberPaging(selectExpression))
             {
-                Sql.AppendLine().Append("FETCH FIRST ");
-
-                Visit(selectExpression.Limit);
-
-                Sql.Append(" ROWS ONLY");
+                Sql.AppendLine().Append(")").Append(" WHERE ");
+                if (selectExpression.Limit != null)
+                {
+                    Sql.Append("rownum <=");
+                    Visit(selectExpression.Limit);
+                }
+                if (selectExpression.Limit != null)
+                {
+                    Sql.Append(" and ");
+                }
+                Sql.Append(" RN >  ");
+                if (selectExpression.Offset == null)
+                {
+                    Sql.Append("0");
+                }
+                else
+                {
+                    Visit(selectExpression.Offset);
+                }
             }
             else
             {
@@ -163,6 +176,8 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Query.Sql.Internal
             return fromSqlExpression;
         }
 
+        private static bool RequiresRowNumberPaging(SelectExpression selectExpression) => selectExpression.Limit != null || selectExpression.Offset != null;
+
         public override Expression VisitSelect(SelectExpression selectExpression)
         {
             Check.NotNull(selectExpression, nameof(selectExpression));
@@ -174,6 +189,11 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Query.Sql.Internal
                 Sql.AppendLine("(");
 
                 subQueryIndent = Sql.Indent();
+            }
+
+            if (RequiresRowNumberPaging(selectExpression))
+            {
+                Sql.Append("SELECT * FROM(").AppendLine().Append("    ");
             }
 
             Sql.Append("SELECT ");
@@ -208,6 +228,11 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Query.Sql.Internal
                 ProcessExpressionList(selectExpression.Projection, GenerateProjection);
 
                 projectionAdded = true;
+
+                if (RequiresRowNumberPaging(selectExpression))
+                {
+                    Sql.Append(",rownum RN ");
+                }
             }
 
             if (!projectionAdded)

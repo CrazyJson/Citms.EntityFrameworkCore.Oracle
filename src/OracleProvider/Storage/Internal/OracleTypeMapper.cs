@@ -13,6 +13,8 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Storage.Internal
 {
     public class OracleTypeMapper : RelationalTypeMapper
     {
+        private readonly BoolTypeMapping _bool = new BoolTypeMapping("NUMBER(1)");
+
         private readonly OracleStringTypeMapping _defaultUnicodeString
          = new OracleStringTypeMapping("NVARCHAR2(2000)", dbType: null, unicode: true);
 
@@ -129,19 +131,21 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Storage.Internal
                     { typeof(DateTime), _datetime },
                     { typeof(byte), _byte },
                     { typeof(double), _double },
+                    { typeof(bool), _bool },
                     { typeof(DateTimeOffset), _datetimeoffset },
                     { typeof(short), _short },
                     { typeof(float), _real },
                     { typeof(decimal), _decimal },
                     { typeof(TimeSpan), _time }
-                };
+        };
 
             _storeTypeMappings
-                = new Dictionary<string, RelationalTypeMapping>(StringComparer.OrdinalIgnoreCase)
-                {
+                    = new Dictionary<string, RelationalTypeMapping>(StringComparer.OrdinalIgnoreCase)
+                    {
                     { "number(19)", _long },
                     { "blob", _variableLengthBinary },
                     { "raw", _fixedLengthBinary },
+                     { "number(1)",  _bool },
                     { "char", _fixedLengthAnsiString },
                     { "date", _date },
                     { "timestamp", _datetime },
@@ -159,7 +163,7 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Storage.Internal
                     { "clob", _unboundedUnicodeString },
                     { "xml", _xml },
                     { "number", _int }
-                };
+                    };
         }
 
         public override RelationalTypeMapping FindMapping(Type clrType)

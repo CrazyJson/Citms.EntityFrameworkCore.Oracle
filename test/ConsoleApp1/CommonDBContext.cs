@@ -23,5 +23,7 @@ namespace ConsoleApp1
         }
 
         public DbSet<Spotting> Spotting { get; set; }
+
+        public DbSet<Department> Department { get; set; }
     }
 }

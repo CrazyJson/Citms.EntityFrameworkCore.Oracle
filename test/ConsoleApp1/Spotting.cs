@@ -21,8 +21,7 @@ namespace ConsoleApp1
         ///<summary>
         ///点位编号(可以为厂家分配的点位编号) 
         ///</summary> 
-        [Column("SPOTTINGNO", TypeName = "VARCHAR2")]
-        [Required]
+        [Column("SPOTTINGNO", TypeName = "VARCHAR2"),Required]
         public string SpottingNo { get; set; }
 
         ///<summary>

@@ -4,6 +4,16 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>Citms.EntityFrameworkCore.Oracle</AssemblyName>
     <RootNamespace>Citms.EntityFrameworkCore.Oracle</RootNamespace>
+    <Authors>焰尾迭</Authors>
+    <Company>武汉中科通达高新技术股份有限公司</Company>
+    <Product>Microsoft Entity Framework Core</Product>
+    <PackageTags>Entity Framework Core;entity-framework-core;EF;Data;O/RM;EntityFramework;EntityFrameworkCore;EFCore;Oracle</PackageTags>
+    <RepositoryType>git</RepositoryType>
+    <Copyright>© Citms. All rights reserved.</Copyright>
+    <Description>Oracle database provider for Entity Framework Core.</Description>
+    <RepositoryUrl>https://github.com/CrazyJson/Citms.EntityFrameworkCore.Oracle</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/CrazyJson/Citms.EntityFrameworkCore.Oracle</PackageProjectUrl>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
