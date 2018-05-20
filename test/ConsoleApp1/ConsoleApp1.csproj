@@ -6,11 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Citms.EntityFrameworkCore.Oracle" Version="1.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="2.0.2" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\src\OracleProvider\OracleProvider.csproj" />
   </ItemGroup>
 
 </Project>

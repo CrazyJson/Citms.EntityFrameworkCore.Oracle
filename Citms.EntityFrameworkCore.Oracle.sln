@@ -7,11 +7,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{BC8C436A-FAC
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{FCC3C061-E75A-4C8B-8152-8F75628297F5}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Citms.EntityFrameworkCore.Oracle", "src\Citms.EntityFrameworkCore.Oracle\Citms.EntityFrameworkCore.Oracle.csproj", "{6E0391BF-F903-4405-AFE9-D65CE09254FC}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleApp1", "test\ConsoleApp1\ConsoleApp1.csproj", "{6A4D99DD-D6C1-45E0-8482-28C4C098E968}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OracleProvider", "src\OracleProvider\OracleProvider.csproj", "{DD06E418-E69B-4CC3-A525-01C974B54FCA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OracleProvider", "src\OracleProvider\OracleProvider.csproj", "{DD06E418-E69B-4CC3-A525-01C974B54FCA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -19,10 +17,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{6E0391BF-F903-4405-AFE9-D65CE09254FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6E0391BF-F903-4405-AFE9-D65CE09254FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6E0391BF-F903-4405-AFE9-D65CE09254FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6E0391BF-F903-4405-AFE9-D65CE09254FC}.Release|Any CPU.Build.0 = Release|Any CPU
 		{6A4D99DD-D6C1-45E0-8482-28C4C098E968}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{6A4D99DD-D6C1-45E0-8482-28C4C098E968}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6A4D99DD-D6C1-45E0-8482-28C4C098E968}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -36,7 +30,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{6E0391BF-F903-4405-AFE9-D65CE09254FC} = {BC8C436A-FAC4-4528-80F1-2DAC8D367E82}
 		{6A4D99DD-D6C1-45E0-8482-28C4C098E968} = {FCC3C061-E75A-4C8B-8152-8F75628297F5}
 		{DD06E418-E69B-4CC3-A525-01C974B54FCA} = {BC8C436A-FAC4-4528-80F1-2DAC8D367E82}
 	EndGlobalSection
