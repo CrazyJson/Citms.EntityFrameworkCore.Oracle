@@ -1,12 +1,4 @@
-﻿/*
- * Model:部门实体
- * Desctiption:部门实体
- * Author:赵贤浩
- * Created: 2016/9/2 15:17:31  
- * Copyright：武汉中科通达高新技术股份有限公司
- */
-
-using System;
+﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
