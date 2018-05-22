@@ -11,6 +11,11 @@ namespace ConsoleApp1
         {
             using (CommonDBContext db = new CommonDBContext())
             {
+                db.Database.Query<Spotting>("select * from common_spotting where spottingId=:a", 
+                    new { a = "123" });
+                db.Database.ToSingle<Spotting>("select * from common_spotting where spottingId=:a",
+                    new { a = "123" });
+
                 int total = db.Spotting.Count();
                 Console.WriteLine("路口总行数：", total);
                 var fDisItem = db.Spotting.FirstOrDefault(e => e.Disabled == true);
@@ -31,7 +36,7 @@ namespace ConsoleApp1
                 db.Spotting.Average(e => e.Longitude);
                 var dt = DateTime.Now.AddDays(-100);
                 //日期过滤
-                db.Spotting.Where(e => 
+                db.Spotting.Where(e =>
                     e.Createdtime >= dt && e.Createdtime <= DateTime.Now && e.Disabled == true).ToList();
                 item.SpottingName = "test";
                 item.Createdtime = DateTime.Now;
