@@ -132,11 +132,25 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Query.Sql.Internal
             if (selectExpression.Limit != null
                 && selectExpression.Offset == null)
             {
-                Sql.AppendLine().Append("FETCH FIRST ");
-
-                Visit(selectExpression.Limit);
-
-                Sql.Append(" ROWS ONLY");
+                Sql.AppendLine().Append(")").Append(" WHERE ");
+                if (selectExpression.Limit != null)
+                {
+                    Sql.Append("rownum <=");
+                    Visit(selectExpression.Limit);
+                }
+                if (selectExpression.Limit != null)
+                {
+                    Sql.Append(" and ");
+                }
+                Sql.Append(" RN >  ");
+                if (selectExpression.Offset == null)
+                {
+                    Sql.Append("0");
+                }
+                else
+                {
+                    Visit(selectExpression.Offset);
+                }
             }
             else
             {
