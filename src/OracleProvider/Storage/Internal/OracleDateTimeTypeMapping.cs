@@ -4,6 +4,7 @@
 using System.Data;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Microsoft.EntityFrameworkCore.Oracle.Storage.Internal
 {
@@ -18,8 +19,16 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Storage.Internal
         {
         }
 
+        protected OracleDateTimeTypeMapping(RelationalTypeMappingParameters parameters)
+            : base(parameters)
+        {
+        }
+
         public override RelationalTypeMapping Clone(string storeType, int? size)
-            => new OracleDateTimeTypeMapping(storeType, DbType);
+            => new OracleDateTimeTypeMapping(Parameters.WithStoreTypeAndSize(storeType, size));
+
+        public override CoreTypeMapping Clone(ValueConverter converter)
+            => new OracleDateTimeTypeMapping(Parameters.WithComposedConverter(converter));
 
         protected override string SqlLiteralFormatString => DateTimeFormatConst;
     }

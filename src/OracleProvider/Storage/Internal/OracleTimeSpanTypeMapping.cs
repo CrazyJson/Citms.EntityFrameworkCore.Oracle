@@ -5,6 +5,7 @@ using System;
 using System.Data;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Microsoft.EntityFrameworkCore.Oracle.Storage.Internal
 {
@@ -14,6 +15,17 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Storage.Internal
             : base(storeType, dbType)
         {
         }
+
+        protected OracleTimeSpanTypeMapping(RelationalTypeMappingParameters parameters)
+            : base(parameters)
+        {
+        }
+
+        public override RelationalTypeMapping Clone(string storeType, int? size)
+            => new OracleTimeSpanTypeMapping(Parameters.WithStoreTypeAndSize(storeType, size));
+
+        public override CoreTypeMapping Clone(ValueConverter converter)
+            => new OracleTimeSpanTypeMapping(Parameters.WithComposedConverter(converter));
 
         protected override string GenerateNonNullSqlLiteral(object value)
         {

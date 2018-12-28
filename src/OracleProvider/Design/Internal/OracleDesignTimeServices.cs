@@ -23,9 +23,9 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Design.Internal
         /// </summary>
         public virtual void ConfigureDesignTimeServices(IServiceCollection serviceCollection)
             => serviceCollection
-                .AddSingleton<IScaffoldingProviderCodeGenerator, OracleScaffoldingCodeGenerator>()
+                .AddSingleton<IRelationalTypeMappingSource, OracleTypeMappingSource>()
                 .AddSingleton<IDatabaseModelFactory, OracleDatabaseModelFactory>()
-                .AddSingleton<IAnnotationCodeGenerator, OracleAnnotationCodeGenerator>()
-                .AddSingleton<IRelationalTypeMapper, OracleTypeMapper>();
+                .AddSingleton<IProviderConfigurationCodeGenerator, OracleCodeGenerator>()
+                .AddSingleton<IAnnotationCodeGenerator, OracleAnnotationCodeGenerator>();
     }
 }

@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using JetBrains.Annotations;
@@ -25,7 +26,7 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Query.Sql.Internal
 
         protected override string TypedTrueLiteral => "1";
         protected override string TypedFalseLiteral => "0";
-        //protected override bool SupportsSchemas => false;
+        protected override string AliasSeparator => " ";
 
         protected override string GenerateOperator(Expression expression)
             => expression.NodeType == ExpressionType.Add
@@ -40,51 +41,48 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Query.Sql.Internal
             switch (binaryExpression.NodeType)
             {
                 case ExpressionType.And:
-                    {
-                        Sql.Append("BITAND(");
+                    Sql.Append("BITAND(");
 
-                        Visit(binaryExpression.Left);
+                    Visit(binaryExpression.Left);
 
-                        Sql.Append(", ");
+                    Sql.Append(", ");
 
-                        Visit(binaryExpression.Right);
+                    Visit(binaryExpression.Right);
 
-                        Sql.Append(")");
+                    Sql.Append(")");
 
-                        return binaryExpression;
-                    }
+                    return binaryExpression;
+
                 case ExpressionType.Or:
-                    {
-                        Visit(binaryExpression.Left);
+                    Visit(binaryExpression.Left);
 
-                        Sql.Append(" - BITAND(");
+                    Sql.Append(" - BITAND(");
 
-                        Visit(binaryExpression.Left);
+                    Visit(binaryExpression.Left);
 
-                        Sql.Append(", ");
+                    Sql.Append(", ");
 
-                        Visit(binaryExpression.Right);
+                    Visit(binaryExpression.Right);
 
-                        Sql.Append(") + ");
+                    Sql.Append(") + ");
 
-                        Visit(binaryExpression.Right);
+                    Visit(binaryExpression.Right);
 
-                        return binaryExpression;
-                    }
+                    return binaryExpression;
+
                 case ExpressionType.Modulo:
-                    {
-                        Sql.Append("MOD(");
+                    Sql.Append("MOD(");
 
-                        Visit(binaryExpression.Left);
+                    Visit(binaryExpression.Left);
 
-                        Sql.Append(", ");
+                    Sql.Append(", ");
 
-                        Visit(binaryExpression.Right);
+                    Visit(binaryExpression.Right);
 
-                        Sql.Append(")");
+                    Sql.Append(")");
 
-                        return binaryExpression;
-                    }
+                    return binaryExpression;
+
             }
 
             return base.VisitBinary(binaryExpression);
@@ -104,23 +102,23 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Query.Sql.Internal
             }
         }
 
-        //protected override void GenerateOrdering(Ordering ordering)
-        //{
-        //    Check.NotNull(ordering, nameof(ordering));
+        protected override void GenerateOrdering(Ordering ordering)
+        {
+            Check.NotNull(ordering, nameof(ordering));
 
-        //    var orderingExpression = ordering.Expression;
+            var orderingExpression = ordering.Expression;
 
-        //    if (!(orderingExpression.NodeType == ExpressionType.Constant
-        //          || orderingExpression.NodeType == ExpressionType.Parameter))
-        //    {
-        //        base.GenerateOrdering(ordering);
+            if (!(orderingExpression.NodeType == ExpressionType.Constant
+                  || orderingExpression.NodeType == ExpressionType.Parameter))
+            {
+                base.GenerateOrdering(ordering);
 
-        //        if (ordering.OrderingDirection == OrderingDirection.Asc)
-        //        {
-        //            Sql.Append(" NULLS FIRST");
-        //        }
-        //    }
-        //}
+                if (ordering.OrderingDirection == OrderingDirection.Asc)
+                {
+                    Sql.Append(" NULLS FIRST");
+                }
+            }
+        }
 
         protected override void GenerateTop(SelectExpression selectExpression)
         {
@@ -131,27 +129,14 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Query.Sql.Internal
         {
             Check.NotNull(selectExpression, nameof(selectExpression));
 
-            if (RequiresRowNumberPaging(selectExpression))
+            if (selectExpression.Limit != null
+                && selectExpression.Offset == null)
             {
-                Sql.AppendLine().Append(")").Append(" WHERE ");
-                if (selectExpression.Limit != null)
-                {
-                    Sql.Append("rownum <=");
-                    Visit(selectExpression.Limit);
-                }
-                if (selectExpression.Limit != null)
-                {
-                    Sql.Append(" and ");
-                }
-                Sql.Append(" RN >  ");
-                if (selectExpression.Offset == null)
-                {
-                    Sql.Append("0");
-                }
-                else
-                {
-                    Visit(selectExpression.Offset);
-                }
+                Sql.AppendLine().Append("FETCH FIRST ");
+
+                Visit(selectExpression.Limit);
+
+                Sql.Append(" ROWS ONLY");
             }
             else
             {
@@ -176,161 +161,9 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Query.Sql.Internal
             return fromSqlExpression;
         }
 
-        private static bool RequiresRowNumberPaging(SelectExpression selectExpression) => selectExpression.Limit != null || selectExpression.Offset != null;
-
-        public override Expression VisitSelect(SelectExpression selectExpression)
+        protected override void GeneratePseudoFromClause()
         {
-            Check.NotNull(selectExpression, nameof(selectExpression));
-
-            IDisposable subQueryIndent = null;
-
-            if (selectExpression.Alias != null)
-            {
-                Sql.AppendLine("(");
-
-                subQueryIndent = Sql.Indent();
-            }
-
-            if (RequiresRowNumberPaging(selectExpression))
-            {
-                Sql.Append("SELECT * FROM(").AppendLine().Append("    ");
-            }
-
-            Sql.Append("SELECT ");
-
-            if (selectExpression.IsDistinct)
-            {
-                Sql.Append("DISTINCT ");
-            }
-
-            GenerateTop(selectExpression);
-
-            var projectionAdded = false;
-
-            if (selectExpression.IsProjectStar)
-            {
-                var tableAlias = selectExpression.ProjectStarTable.Alias;
-
-                Sql
-                    .Append(SqlGenerator.DelimitIdentifier(tableAlias))
-                    .Append(".*");
-
-                projectionAdded = true;
-            }
-
-            if (selectExpression.Projection.Any())
-            {
-                if (selectExpression.IsProjectStar)
-                {
-                    Sql.Append(", ");
-                }
-
-                ProcessExpressionList(selectExpression.Projection, GenerateProjection);
-
-                projectionAdded = true;
-
-                if (RequiresRowNumberPaging(selectExpression))
-                {
-                    Sql.Append(",rownum RN ");
-                }
-            }
-
-            if (!projectionAdded)
-            {
-                Sql.Append("1");
-            }
-
-            if (selectExpression.Tables.Any())
-            {
-                Sql.AppendLine()
-                    .Append("FROM ");
-
-                ProcessExpressionList(selectExpression.Tables, sql => sql.AppendLine());
-            }
-            else
-            {
-                Sql.Append(" FROM DUAL");
-            }
-
-            if (selectExpression.Predicate != null)
-            {
-                GeneratePredicate(selectExpression.Predicate);
-            }
-
-            if (selectExpression.OrderBy.Any())
-            {
-                Sql.AppendLine();
-
-                GenerateOrderBy(selectExpression.OrderBy);
-            }
-
-            GenerateLimitOffset(selectExpression);
-
-            if (subQueryIndent != null)
-            {
-                subQueryIndent.Dispose();
-
-                Sql.AppendLine()
-                    .Append(")");
-
-                if (selectExpression.Alias.Length > 0)
-                {
-                    Sql.Append(" ")
-                        .Append(SqlGenerator.DelimitIdentifier(selectExpression.Alias));
-                }
-            }
-
-            return selectExpression;
-        }
-
-        private void ProcessExpressionList(
-            IReadOnlyList<Expression> expressions, Action<IRelationalCommandBuilder> joinAction = null)
-            => ProcessExpressionList(expressions, e => Visit(e), joinAction);
-
-        private void ProcessExpressionList<T>(
-            IReadOnlyList<T> items, Action<T> itemAction, Action<IRelationalCommandBuilder> joinAction = null)
-        {
-            joinAction = joinAction ?? (isb => isb.Append(", "));
-
-            for (var i = 0; i < items.Count; i++)
-            {
-                if (i > 0)
-                {
-                    joinAction(Sql);
-                }
-
-                itemAction(items[i]);
-            }
-        }
-
-        public override Expression VisitAlias(AliasExpression aliasExpression)
-        {
-            Check.NotNull(aliasExpression, nameof(aliasExpression));
-
-            Visit(aliasExpression.Expression);
-
-            if (aliasExpression.Alias != null)
-            {
-                Sql.Append(" ");
-            }
-
-            if (aliasExpression.Alias != null)
-            {
-                Sql.Append(SqlGenerator.DelimitIdentifier(aliasExpression.Alias));
-            }
-
-            return aliasExpression;
-        }
-
-        public override Expression VisitTable(TableExpression tableExpression)
-        {
-            Check.NotNull(tableExpression, nameof(tableExpression));
-
-            Sql.Append(SqlGenerator.DelimitIdentifier(tableExpression.Table))
-                .Append(" ")
-                .Append(SqlGenerator.DelimitIdentifier(tableExpression.Alias));
-
-            return tableExpression;
+            Sql.Append(" FROM DUAL");
         }
 
         public override Expression VisitCrossJoinLateral(CrossJoinLateralExpression crossJoinLateralExpression)
@@ -344,75 +177,96 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Query.Sql.Internal
             return crossJoinLateralExpression;
         }
 
+        private static readonly HashSet<string> _builtInFunctions
+            = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "MAX",
+                "MIN",
+                "SUM",
+                "SUBSTR",
+                "INSTR",
+                "LENGTH",
+                "COUNT"
+            };
+
         public override Expression VisitSqlFunction(SqlFunctionExpression sqlFunctionExpression)
         {
             switch (sqlFunctionExpression.FunctionName)
             {
                 case "EXTRACT":
-                    {
-                        Sql.Append(sqlFunctionExpression.FunctionName);
-                        Sql.Append("(");
+                    Sql.Append(sqlFunctionExpression.FunctionName);
+                    Sql.Append("(");
 
-                        Visit(sqlFunctionExpression.Arguments[0]);
+                    Visit(sqlFunctionExpression.Arguments[0]);
 
-                        Sql.Append(" FROM ");
+                    Sql.Append(" FROM ");
 
-                        Visit(sqlFunctionExpression.Arguments[1]);
+                    Visit(sqlFunctionExpression.Arguments[1]);
 
-                        Sql.Append(")");
+                    Sql.Append(")");
 
-                        return sqlFunctionExpression;
-                    }
+                    return sqlFunctionExpression;
+
                 case "CAST":
-                    {
-                        Sql.Append(sqlFunctionExpression.FunctionName);
-                        Sql.Append("(");
+                    Sql.Append(sqlFunctionExpression.FunctionName);
+                    Sql.Append("(");
 
-                        Visit(sqlFunctionExpression.Arguments[0]);
+                    Visit(sqlFunctionExpression.Arguments[0]);
 
-                        Sql.Append(" AS ");
+                    Sql.Append(" AS ");
 
-                        Visit(sqlFunctionExpression.Arguments[1]);
+                    Visit(sqlFunctionExpression.Arguments[1]);
 
-                        Sql.Append(")");
+                    Sql.Append(")");
 
-                        return sqlFunctionExpression;
-                    }
+                    return sqlFunctionExpression;
+
                 case "AVG" when sqlFunctionExpression.Type == typeof(decimal):
                 case "SUM" when sqlFunctionExpression.Type == typeof(decimal):
-                    {
-                        Sql.Append("CAST(");
+                    Sql.Append("CAST(");
 
-                        base.VisitSqlFunction(sqlFunctionExpression);
+                    base.VisitSqlFunction(sqlFunctionExpression);
 
-                        Sql.Append(" AS DECIMAL(29,4))");
+                    Sql.Append(" AS NUMBER(29,4))");
 
-                        return sqlFunctionExpression;
-                    }
+                    return sqlFunctionExpression;
+
                 case "INSTR":
+                    if (sqlFunctionExpression.Arguments[1] is ParameterExpression parameterExpression
+                        && ParameterValues.TryGetValue(parameterExpression.Name, out var value)
+                        && ((string)value)?.Length == 0)
                     {
-                        if (sqlFunctionExpression.Arguments[1] is ParameterExpression parameterExpression
-                            && ParameterValues.TryGetValue(parameterExpression.Name, out var value)
-                            && (string)value == string.Empty)
-                        {
-                            return Visit(Expression.Constant(1));
-                        }
-
-                        break;
+                        return Visit(Expression.Constant(1));
                     }
+
+                    break;
+
                 case "ADD_MONTHS":
-                    {
-                        Sql.Append("CAST(");
+                    Sql.Append("CAST(");
 
-                        base.VisitSqlFunction(sqlFunctionExpression);
+                    base.VisitSqlFunction(sqlFunctionExpression);
 
-                        Sql.Append(" AS TIMESTAMP)");
+                    Sql.Append(" AS TIMESTAMP)");
 
-                        return sqlFunctionExpression;
-                    }
+                    return sqlFunctionExpression;
+
             }
 
-            return base.VisitSqlFunction(sqlFunctionExpression);
+            return base.VisitSqlFunction(
+                // non-instance & non-built-in functions without schema needs to be delimited
+                (!_builtInFunctions.Contains(sqlFunctionExpression.FunctionName)
+                && sqlFunctionExpression.Instance == null)
+                    ? sqlFunctionExpression.IsNiladic
+                        ? new SqlFunctionExpression(
+                            SqlGenerator.DelimitIdentifier(sqlFunctionExpression.FunctionName),
+                            sqlFunctionExpression.Type,
+                            sqlFunctionExpression.IsNiladic)
+                        : new SqlFunctionExpression(
+                            SqlGenerator.DelimitIdentifier(sqlFunctionExpression.FunctionName),
+                            sqlFunctionExpression.Type,
+                            /* schema:*/ null,
+                            sqlFunctionExpression.Arguments)
+                    : sqlFunctionExpression);
         }
 
         protected override void GenerateProjection(Expression projection)
@@ -429,11 +283,9 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Query.Sql.Internal
         }
 
         private static Expression ExplicitCastToBool(Expression expression)
-        {
-            return (expression as BinaryExpression)?.NodeType == ExpressionType.Coalesce
-                   && expression.Type.UnwrapNullableType() == typeof(bool)
+            => (expression as BinaryExpression)?.NodeType == ExpressionType.Coalesce
+               && expression.Type.UnwrapNullableType() == typeof(bool)
                 ? new ExplicitCastExpression(expression, expression.Type)
                 : expression;
-        }
     }
 }

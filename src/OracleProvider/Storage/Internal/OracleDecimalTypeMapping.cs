@@ -4,15 +4,35 @@
 using System.Data;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Microsoft.EntityFrameworkCore.Oracle.Storage.Internal
 {
     public class OracleDecimalTypeMapping : DecimalTypeMapping
     {
-        public OracleDecimalTypeMapping([NotNull] string storeType, [CanBeNull] DbType? dbType = null) : base(storeType, dbType)
+        public OracleDecimalTypeMapping(
+            [NotNull] string storeType,
+            DbType? dbType = null,
+            int? precision = null,
+            int? scale = null,
+            StoreTypePostfix storeTypePostfix = StoreTypePostfix.None)
+            : base(
+                new RelationalTypeMappingParameters(
+                    new CoreTypeMappingParameters(typeof(decimal)),
+                    storeType,
+                    storeTypePostfix,
+                    dbType,
+                    precision: precision,
+                    scale: scale))
         {
         }
 
-        public override RelationalTypeMapping Clone(string storeType, int? size) => new OracleDecimalTypeMapping(storeType);
+        protected OracleDecimalTypeMapping(RelationalTypeMappingParameters parameters)
+            : base(parameters)
+        {
+        }
+
+        protected override RelationalTypeMapping Clone(RelationalTypeMappingParameters parameters)
+            => new OracleDecimalTypeMapping(parameters);
     }
 }

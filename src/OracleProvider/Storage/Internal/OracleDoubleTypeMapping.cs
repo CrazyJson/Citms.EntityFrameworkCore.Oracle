@@ -4,45 +4,36 @@
 using System.Data;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Microsoft.EntityFrameworkCore.Oracle.Storage.Internal
 {
     public class OracleDoubleTypeMapping : DoubleTypeMapping
     {
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="OracleDoubleTypeMapping" /> class.
-        /// </summary>
-        /// <param name="storeType"> The name of the database type. </param>
-        /// <param name="dbType"> The <see cref="DbType" /> to be used. </param>
         public OracleDoubleTypeMapping(
-            [NotNull] string storeType,
-            [CanBeNull] DbType? dbType = null)
-            : base(storeType, dbType)
+             [NotNull] string storeType,
+             DbType? dbType = null)
+             : base(storeType, dbType)
         {
         }
 
-        /// <summary>
-        ///     Creates a copy of this mapping.
-        /// </summary>
-        /// <param name="storeType"> The name of the database type. </param>
-        /// <param name="size"> The size of data the property is configured to store, or null if no size is configured. </param>
-        /// <returns> The newly created mapping. </returns>
-        public override RelationalTypeMapping Clone(string storeType, int? size)
-            => new OracleDoubleTypeMapping(storeType, DbType);
+        protected OracleDoubleTypeMapping(RelationalTypeMappingParameters parameters)
+            : base(parameters)
+        {
+        }
 
-        /// <summary>
-        ///     Generates the SQL representation of a literal value.
-        /// </summary>
-        /// <param name="value">The literal value.</param>
-        /// <returns>
-        ///     The generated string.
-        /// </returns>
+        protected override RelationalTypeMapping Clone(RelationalTypeMappingParameters parameters)
+            => new OracleDoubleTypeMapping(parameters);
+
         protected override string GenerateNonNullSqlLiteral(object value)
         {
             var literal = base.GenerateNonNullSqlLiteral(value);
 
+            var doubleValue = (double)value;
             if (!literal.Contains("E")
-                && !literal.Contains("e"))
+                && !literal.Contains("e")
+                && !double.IsNaN(doubleValue)
+                && !double.IsInfinity(doubleValue))
             {
                 return literal + "E0";
             }

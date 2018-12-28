@@ -4,8 +4,8 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Citms.EntityFrameworkCore.OracleProperties;
 using JetBrains.Annotations;
+using Microsoft.EntityFrameworkCore.Oracle.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Microsoft.EntityFrameworkCore.Oracle.Storage.Internal
