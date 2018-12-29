@@ -168,10 +168,10 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Storage.Internal
         {
             var mapping = FindRawMapping(mappingInfo)?.Clone(mappingInfo);
 
-            if (_disallowedMappings.Contains(mapping?.StoreType))
-            {
-                throw new ArgumentException(OracleStrings.UnqualifiedDataType(mapping.StoreType));
-            }
+            //if (_disallowedMappings.Contains(mapping?.StoreType))
+            //{
+            //    throw new ArgumentException(OracleStrings.UnqualifiedDataType(mapping.StoreType));
+            //}
 
             return mapping;
         }
