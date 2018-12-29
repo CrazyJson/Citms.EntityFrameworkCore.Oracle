@@ -254,8 +254,8 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Update.Internal
                     .Append("RETURNING ")
                     .AppendJoin(
                         operations,
-                        (sb, cm) => sb.Append(SqlGenerationHelper.DelimitIdentifier(cm.ColumnName)))
-                    .Append(" INTO list").Append(name).Append("(").Append(commandPosition + 1).Append(")");
+                        (sb, cm) => sb.Append(SqlGenerationHelper.DelimitIdentifier(cm.ColumnName)
+                    + $" INTO list{name}({commandPosition + 1}).{cm.ColumnName}"));
             }
 
             commandStringBuilder.AppendLine(SqlGenerationHelper.StatementTerminator);
