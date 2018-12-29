@@ -2,6 +2,8 @@
 using System.Linq;
 using System.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
+using Oracle.ManagedDataAccess.Client;
 
 namespace ConsoleApp1
 {
@@ -22,6 +24,18 @@ namespace ConsoleApp1
                 var list = db.Spotting.ToList();
                 string[] arrSpottingNo = new string[] { "123", "34" };
                 db.Spotting.Where(e => arrSpottingNo.Contains(e.SpottingNo)).ToList();
+
+                //var cmd = db.Database.GetDbConnection().CreateCommand();
+                //cmd.CommandType = CommandType.StoredProcedure;
+                //cmd.CommandText = "procName";
+                //OracleParameter guest_type = new OracleParameter(":i_guest_type", OracleDbType.Int32);
+                //guest_type.Value = 10;
+                //guest_type.Direction = ParameterDirection.Input;
+                //cmd.Parameters.Add(guest_type);
+                //cmd.Connection.Open();
+                ////int retCode = cmd.ExecuteNonQuery();
+                //var reader = cmd.ExecuteReader();
+                //cmd.Connection.Close();
 
 
 
