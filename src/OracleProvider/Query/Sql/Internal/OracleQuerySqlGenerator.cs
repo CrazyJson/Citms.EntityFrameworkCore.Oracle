@@ -305,7 +305,7 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Query.Sql.Internal
         {
             Check.NotNull(tableExpression, nameof(tableExpression));
 
-            Sql.Append(SqlGenerator.DelimitIdentifier(tableExpression.Table))
+            Sql.Append(SqlGenerator.DelimitIdentifier(tableExpression.Table, tableExpression.Schema))
                 .Append(" ")
                 .Append(SqlGenerator.DelimitIdentifier(tableExpression.Alias));
 
