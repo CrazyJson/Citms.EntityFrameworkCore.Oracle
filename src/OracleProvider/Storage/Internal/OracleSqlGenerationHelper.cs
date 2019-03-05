@@ -36,7 +36,7 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Storage.Internal
         public override string BatchTerminator => "GO" + Environment.NewLine + Environment.NewLine;
 
         public override string DelimitIdentifier(string identifier)
-            => $"\"{EscapeIdentifier(Check.NotEmpty(identifier, nameof(identifier)))}\""; // Interpolation okay; strings
+            => $"\"{EscapeIdentifier(Check.NotEmpty(identifier, nameof(identifier)).ToUpper())}\""; // Interpolation okay; strings
 
         public override void DelimitIdentifier(StringBuilder builder, string identifier)
         {
