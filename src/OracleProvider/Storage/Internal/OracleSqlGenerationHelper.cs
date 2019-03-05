@@ -43,7 +43,7 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Storage.Internal
             Check.NotEmpty(identifier, nameof(identifier));
 
             builder.Append('"');
-            EscapeIdentifier(builder, identifier);
+            EscapeIdentifier(builder, identifier.ToUpper());
             builder.Append('"');
         }
     }
