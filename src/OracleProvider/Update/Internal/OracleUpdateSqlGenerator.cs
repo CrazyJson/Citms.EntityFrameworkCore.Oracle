@@ -255,7 +255,11 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Update.Internal
                     .AppendJoin(
                         operations,
                         (sb, cm) => sb.Append(SqlGenerationHelper.DelimitIdentifier(cm.ColumnName)))
-                    .Append(" INTO list").Append(name).Append("(").Append(commandPosition + 1).Append(")");
+                    .Append(" INTO ")
+                    .AppendJoin(
+                        operations,
+                        (sb, cm) => sb.Append($" list{name}({commandPosition + 1}).{cm.ColumnName}"));
+
             }
 
             commandStringBuilder.AppendLine(SqlGenerationHelper.StatementTerminator);
