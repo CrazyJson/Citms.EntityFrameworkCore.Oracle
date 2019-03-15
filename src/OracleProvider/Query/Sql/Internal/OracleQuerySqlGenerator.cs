@@ -447,7 +447,24 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Query.Sql.Internal
                 ? new AliasExpression(aliasedProjection.Alias, updatedExperssion)
                 : updatedExperssion;
 
-            base.GenerateProjection(expressionToProcess);
+            var colExp = expressionToProcess as ColumnExpression;
+            if (colExp == null)
+            {
+                base.GenerateProjection(expressionToProcess);
+                return;
+            }
+            var tblExp = colExp.Table as TableExpression;
+
+            if (tblExp.Alias.Contains("."))
+            {
+                var fieldStr = $"{SqlGenerator.DelimitIdentifier(tblExp.Alias ?? tblExp.Table)}.\"{colExp.Name}\" as {SqlGenerator.DelimitIdentifier($"{tblExp.Alias ?? tblExp.Table}.{colExp.Name}")}  ";
+
+                Sql.Append(fieldStr);
+            }
+            else
+            {
+                base.GenerateProjection(expressionToProcess);
+            }
         }
 
         private static Expression ExplicitCastToBool(Expression expression)
