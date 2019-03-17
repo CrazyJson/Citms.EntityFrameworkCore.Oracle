@@ -42,7 +42,7 @@ namespace Microsoft.EntityFrameworkCore
 
             if (model.Oracle().FindSequence(name, schema) == null)
             {
-                model.Oracle().GetOrAddSequence(name, schema).IncrementBy = 10;
+                model.Oracle().GetOrAddSequence(name, schema).IncrementBy = 1;
             }
 
             GetOracleInternalBuilder(propertyBuilder).ValueGenerationStrategy(OracleValueGenerationStrategy.SequenceHiLo);

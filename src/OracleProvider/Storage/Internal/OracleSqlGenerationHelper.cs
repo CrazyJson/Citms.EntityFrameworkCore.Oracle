@@ -33,7 +33,7 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Storage.Internal
             builder.Append(GenerateParameterName(name));
         }
 
-        public override string BatchTerminator => "GO" + Environment.NewLine + Environment.NewLine;
+        public override string BatchTerminator => "/" + Environment.NewLine;
 
         public override string DelimitIdentifier(string identifier)
             => $"\"{EscapeIdentifier(Check.NotEmpty(identifier, nameof(identifier)).ToUpper())}\""; // Interpolation okay; strings
