@@ -25,7 +25,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Conventions
 
             var valueGenerationStrategyConvention = new OracleValueGenerationStrategyConvention();
             conventionSet.ModelInitializedConventions.Add(valueGenerationStrategyConvention);
-            conventionSet.ModelInitializedConventions.Add(new RelationalMaxIdentifierLengthConvention(128));
+            conventionSet.ModelInitializedConventions.Add(new RelationalMaxIdentifierLengthConvention(30));
 
             ValueGeneratorConvention valueGeneratorConvention = new OracleValueGeneratorConvention();
             ReplaceConvention(conventionSet.BaseEntityTypeChangedConventions, valueGeneratorConvention);
