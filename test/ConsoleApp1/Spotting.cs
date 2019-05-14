@@ -9,25 +9,25 @@ namespace ConsoleApp1
     ///<summary>
     ///道路点位表 Spottings 有"s"后辍，与现有的Spotting区别开来
     ///</summary>
-    [Table("COMMON_SPOTTING")]
+    [Table("common_spotting")]
     public class Spotting
     {
         ///<summary>
         ///点位ID 
         ///</summary> 
-        [Key, Column("SPOTTINGID", TypeName = "VARCHAR2")]
+        [Key, Column("spottingid", TypeName = "VARCHAR2")]
         public string SpottingId { get; set; }
 
         ///<summary>
         ///点位编号(可以为厂家分配的点位编号) 
         ///</summary> 
-        [Column("SPOTTINGNO", TypeName = "VARCHAR2"),Required]
+        [Column("spottingno", TypeName = "VARCHAR2"),Required]
         public string SpottingNo { get; set; }
 
         ///<summary>
         ///点位名称 
         ///</summary> 
-        [Column("SPOTTINGNAME")]
+        [Column("spottingname")]
         [Required]
         public string SpottingName { get; set; }
 

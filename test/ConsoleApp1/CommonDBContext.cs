@@ -18,8 +18,17 @@ namespace ConsoleApp1
             var logger = new LoggerFactory();
             logger.AddConsole();
             optionsBuilder.UseLoggerFactory(logger);
-            optionsBuilder.UseOracle("DATA SOURCE=192.168.0.245:1521/tjims;PASSWORD=citms;PERSIST SECURITY INFO=True;USER ID=hsepp");
+            optionsBuilder.UseOracle("DATA SOURCE=192.168.0.151:1521/orcl;PASSWORD=citms;PERSIST SECURITY INFO=True;USER ID=tjepp");
             base.OnConfiguring(optionsBuilder);
+
+
+
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Spotting>().Property(t => t.Createdtime).ValueGeneratedOnAdd();
+            modelBuilder.Entity<Spotting>().Property(t => t.ModifiedTime).ValueGeneratedOnAdd();
         }
 
         public DbSet<Spotting> Spotting { get; set; }

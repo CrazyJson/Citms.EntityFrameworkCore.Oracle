@@ -4,6 +4,7 @@ using System.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
 using Oracle.ManagedDataAccess.Client;
+using System.Collections.Generic;
 
 namespace ConsoleApp1
 {
@@ -14,6 +15,8 @@ namespace ConsoleApp1
             using (CommonDBContext db = new CommonDBContext())
             {
                 int total = db.Spotting.Count();
+                var x1 = db.Spotting.GroupBy(e => e.DepartmentId).Select(e => new { e.Key, count = e.Count() }).ToList();
+
                 Console.WriteLine("路口总行数：{0}", total);
                 var fDisItem = db.Spotting.FirstOrDefault(e => e.Disabled == true);
                 Console.WriteLine("第一条禁用路口：{0}", fDisItem.SpottingName);
@@ -47,28 +50,38 @@ namespace ConsoleApp1
                 //日期过滤
                 db.Spotting.Where(e =>
                     e.Createdtime >= dt && e.Createdtime <= DateTime.Now && e.Disabled == true).ToList();
-
-
-                var itemNew = new Spotting
+                var listSpotting = new List<Spotting>();
+                for (int i = 0; i < 1; i++)
                 {
-                    SpottingId = Guid.NewGuid().ToString("N"),
-                    SpottingName = "test",
-                    SpottingNo = "test",
-                    Creator = "admin",
-                    Createdtime = DateTime.Now,
-                    DepartmentId = Guid.NewGuid().ToString("N")
-                };
-                db.Entry(itemNew).State = EntityState.Added;
-                Console.WriteLine("新增一条路口Id：{0} 数据", itemNew.SpottingId);
+                    var itemNew = new Spotting
+                    {
+                        SpottingId = Guid.NewGuid().ToString("N"),
+                        SpottingName = "test",
+                        SpottingNo = "test",
+                        Creator = "admin",
+                        SourceKind = "local",
+                        ApplicationName = "ims",
+                        //Createdtime = DateTime.Now,
+                        DepartmentId = Guid.NewGuid().ToString("N")
+                    };
+                    listSpotting.Add(itemNew);
+                }
+                db.AddRange(listSpotting);
+                db.SaveChanges();
 
-                //var itemModify = db.Spotting.Find(itemNew.SpottingId);
-                //itemModify.SpottingName = "testModify";
-                //db.Entry(itemModify).State = EntityState.Modified;
-                //Console.WriteLine("修改路口Id：{0} 数据的名称为：{1}", itemNew.SpottingId,itemModify.SpottingName);
+                db.RemoveRange(db.Spotting.Where(e => listSpotting.Select(t => t.SpottingId).Contains(e.SpottingId)));
+                db.SaveChanges();
+                //db.Entry(itemNew).State = EntityState.Added;
+                //Console.WriteLine("新增一条路口Id：{0} 数据", itemNew.SpottingId);
 
-                var dItem = db.Spotting.Find(itemNew.SpottingId);
-                db.Remove(dItem);
-                Console.WriteLine("删除路口Id：{0} 数据", itemNew.SpottingId);
+                ////var itemModify = db.Spotting.Find(itemNew.SpottingId);
+                ////itemModify.SpottingName = "testModify";
+                ////db.Entry(itemModify).State = EntityState.Modified;
+                ////Console.WriteLine("修改路口Id：{0} 数据的名称为：{1}", itemNew.SpottingId,itemModify.SpottingName);
+
+                //var dItem = db.Spotting.Find(itemNew.SpottingId);
+                //db.Remove(dItem);
+                //Console.WriteLine("删除路口Id：{0} 数据", itemNew.SpottingId);
 
                 //关联查询
                 var x = (from p in db.Spotting

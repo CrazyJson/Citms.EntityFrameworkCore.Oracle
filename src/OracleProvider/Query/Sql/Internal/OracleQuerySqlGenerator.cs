@@ -236,6 +236,12 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Query.Sql.Internal
                 GeneratePredicate(selectExpression.Predicate);
             }
 
+            if (selectExpression.GroupBy.Any())
+            {
+                Sql.AppendLine().Append("GROUP BY ");
+                ProcessExpressionList(selectExpression.GroupBy);
+            }
+
             if (selectExpression.OrderBy.Any())
             {
                 Sql.AppendLine();
