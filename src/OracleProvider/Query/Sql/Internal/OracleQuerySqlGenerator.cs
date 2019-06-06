@@ -131,7 +131,7 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Query.Sql.Internal
 
             if (RequiresRowNumberPaging(selectExpression))
             {
-                Sql.AppendLine().Append(")").Append(" WHERE ");
+                Sql.AppendLine().Append(") t)").Append(" WHERE ");
                 if (selectExpression.Limit != null)
                 {
                     Sql.Append("rownum <=");
@@ -172,7 +172,7 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Query.Sql.Internal
 
             if (RequiresRowNumberPaging(selectExpression))
             {
-                Sql.Append("SELECT * FROM(").AppendLine().Append("    ");
+                Sql.Append("SELECT * FROM (SELECT t.*,rownum RN  FROM(").AppendLine().Append("    ");
             }
 
             Sql.Append("SELECT ");
@@ -207,11 +207,6 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Query.Sql.Internal
                 ProcessExpressionList(selectExpression.Projection, GenerateProjection);
 
                 projectionAdded = true;
-
-                if (RequiresRowNumberPaging(selectExpression))
-                {
-                    Sql.Append(",rownum RN ");
-                }
             }
 
             if (!projectionAdded)
