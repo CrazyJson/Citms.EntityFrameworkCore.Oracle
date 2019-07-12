@@ -7,6 +7,7 @@ using System.Data.Common;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Oracle.ManagedDataAccess.Client;
 
 namespace Microsoft.EntityFrameworkCore.Oracle.Storage.Internal
 {
@@ -16,7 +17,7 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Storage.Internal
         private const int AnsiMax = 4000;
 
         private readonly int _maxSpecificSize;
-
+        private readonly string _storeType;
         private readonly StoreTypePostfix? _storeTypePostfix;
 
         public OracleStringTypeMapping(
@@ -43,6 +44,7 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Storage.Internal
             : base(parameters)
         {
             _maxSpecificSize = CalculateSize(parameters.Unicode, parameters.Size);
+            _storeType = parameters.StoreType;
         }
 
         private static StoreTypePostfix GetStoreTypePostfix(
@@ -89,6 +91,10 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Storage.Internal
                 parameter.Size = value == null || value == DBNull.Value || length != null && length <= _maxSpecificSize
                     ? _maxSpecificSize
                     : 0;
+                if (_storeType == "CLOB")
+                {
+                    ((OracleParameter)parameter).OracleDbType = OracleDbType.Clob;
+                }
             }
             catch (Exception e)
             {

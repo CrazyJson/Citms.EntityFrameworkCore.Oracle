@@ -10,6 +10,7 @@ using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Oracle.ManagedDataAccess.Client;
 
 namespace Microsoft.EntityFrameworkCore.Oracle.Storage.Internal
 {
@@ -18,6 +19,8 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Storage.Internal
         private const int MaxSize = 8000;
 
         private readonly int _maxSpecificSize;
+
+        private readonly string _storeType;
 
         private readonly StoreTypePostfix? _storeTypePostfix;
 
@@ -44,6 +47,7 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Storage.Internal
             : base(parameters)
         {
             _maxSpecificSize = CalculateSize(parameters.Size);
+            _storeType = parameters.StoreType;
         }
 
         private static StoreTypePostfix GetStoreTypePostfix(StoreTypePostfix? storeTypePostfix, int? size)
@@ -72,6 +76,10 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Storage.Internal
                   && length <= _maxSpecificSize
                     ? _maxSpecificSize
                     : parameter.Size;
+            if (_storeType == "BLOB")
+            {
+                ((OracleParameter)parameter).OracleDbType = OracleDbType.Blob;
+            } 
         }
 
         protected override string GenerateNonNullSqlLiteral(object value)
