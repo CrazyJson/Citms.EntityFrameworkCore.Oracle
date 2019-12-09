@@ -13,9 +13,9 @@
     <RepositoryUrl>https://github.com/CrazyJson/Citms.EntityFrameworkCore.Oracle</RepositoryUrl>
     <PackageProjectUrl>https://github.com/CrazyJson/Citms.EntityFrameworkCore.Oracle</PackageProjectUrl>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>1.0.9</Version>
-    <FileVersion>1.0.9.0</FileVersion>
-    <AssemblyVersion>1.0.9.0</AssemblyVersion>
+    <Version>1.1.0</Version>
+    <FileVersion>1.1.0.0</FileVersion>
+    <AssemblyVersion>1.1.0.0</AssemblyVersion>
     <PackageReleaseNotes>2019-07-12 修复blob,clob大数据字段转换bug</PackageReleaseNotes>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -26,7 +26,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="2.2.6" />
-    <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="2.19.31" />
+    <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="2.19.60" />
   </ItemGroup>
   <ItemGroup>
     <None Update="Properties\OracleStrings.Designer.tt">
