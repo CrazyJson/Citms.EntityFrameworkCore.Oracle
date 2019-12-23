@@ -137,12 +137,12 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Scaffolding.Internal
             {
                 var commandText = @"
 SELECT
-    t.tablespace_name AS schema,
+    user AS schema,
     t.table_name AS name
 FROM user_tables t ";
 
                 var filter =
-                    $"WHERE t.table_name <> '{HistoryRepository.DefaultTableName}' {(tableFilter != null ? $" AND {tableFilter("t.tablespace_name", "t.table_name")}" : "")}";
+                    $"WHERE t.table_name <> '{HistoryRepository.DefaultTableName}' {(tableFilter != null ? $" AND {tableFilter("user", "t.table_name")}" : "")}";
 
                 command.CommandText = commandText + filter;
 
@@ -183,7 +183,7 @@ FROM user_tables t ";
 
                 command.CommandText = new StringBuilder()
                     .AppendLine("SELECT")
-                    .AppendLine("   t.tablespace_name,")
+                    .AppendLine("   user,")
                     .AppendLine("   c.table_name,")
                     .AppendLine("   c.column_name,")
                     .AppendLine("   c.column_id,")
@@ -206,7 +206,7 @@ FROM user_tables t ";
                 {
                     var tableColumnGroups = reader.Cast<DbDataRecord>()
                         .GroupBy(
-                            ddr => (tableSchema: ddr.GetValueOrDefault<string>("tablespace_name"),
+                            ddr => (tableSchema: ddr.GetValueOrDefault<string>("user"),
                                 tableName: ddr.GetValueOrDefault<string>("table_name")));
 
                     foreach (var tableColumnGroup in tableColumnGroups)
@@ -277,7 +277,7 @@ FROM user_tables t ";
             {
                 command.CommandText = new StringBuilder()
                     .AppendLine("SELECT")
-                    .AppendLine("   t.tablespace_name,")
+                    .AppendLine("   user,")
                     .AppendLine("   a.table_name,")
                     .AppendLine("   a.column_name,")
                     .AppendLine("   c.delete_rule,")
@@ -296,7 +296,7 @@ FROM user_tables t ";
                 {
                     var tableIndexGroups = reader.Cast<DbDataRecord>()
                         .GroupBy(
-                            ddr => (tableSchema: ddr.GetValueOrDefault<string>("tablespace_name"),
+                            ddr => (tableSchema: ddr.GetValueOrDefault<string>("user"),
                                 tableName: ddr.GetValueOrDefault<string>("table_name")));
 
                     foreach (var tableIndexGroup in tableIndexGroups)
@@ -374,7 +374,8 @@ FROM user_tables t ";
             using (var command = connection.CreateCommand())
             {
                 command.CommandText = new StringBuilder()
-                    .AppendLine("SELECT t.tablespace_name,")
+                    .AppendLine("SELECT")
+                    .AppendLine("     user,")
                     .AppendLine("     x.table_name,")
                     .AppendLine("     x.column_name,")
                     .AppendLine("     c.table_name principal_table_name,")
@@ -397,7 +398,7 @@ FROM user_tables t ";
                 {
                     var tableForeignKeyGroups = reader.Cast<DbDataRecord>()
                         .GroupBy(
-                            ddr => (tableSchema: ddr.GetValueOrDefault<string>("tablespace_name"),
+                            ddr => (tableSchema: ddr.GetValueOrDefault<string>("user"),
                                 tableName: ddr.GetValueOrDefault<string>("table_name")));
 
                     foreach (var tableForeignKeyGroup in tableForeignKeyGroups)
@@ -410,7 +411,7 @@ FROM user_tables t ";
                         var foreignKeyGroups = tableForeignKeyGroup
                             .GroupBy(
                                 c => (Name: c.GetValueOrDefault<string>("constraint_name"),
-                                    PrincipalTableSchema: c.GetValueOrDefault<string>("tablespace_name"),
+                                    PrincipalTableSchema: c.GetValueOrDefault<string>("user"),
                                     PrincipalTableName: c.GetValueOrDefault<string>("principal_table_name"),
                                     OnDeleteAction: c.GetValueOrDefault<string>("delete_rule")));
 
@@ -497,7 +498,7 @@ FROM user_tables t ";
             {
                 var queryBuilder = new StringBuilder()
                     .AppendLine("SELECT")
-                    .AppendLine("   b.tablespace_name,")
+                    .AppendLine("   user,")
                     .AppendLine("   b.uniqueness,")
                     .AppendLine("   a.index_name,")
                     .AppendLine("   a.table_name,")
@@ -516,7 +517,7 @@ FROM user_tables t ";
                 {
                     var tableIndexGroups = reader.Cast<DbDataRecord>()
                         .GroupBy(
-                            ddr => (tableSchema: ddr.GetValueOrDefault<string>("tablespace_name"),
+                            ddr => (tableSchema: ddr.GetValueOrDefault<string>("user"),
                                 tableName: ddr.GetValueOrDefault<string>("table_name")));
 
                     foreach (var tableIndexGroup in tableIndexGroups)
@@ -567,7 +568,7 @@ FROM user_tables t ";
         {
             using (var command = connection.CreateCommand())
             {
-                command.CommandText = "SELECT default_tablespace FROM user_users";
+                command.CommandText = "SELECT username FROM user_users";
 
                 if (command.ExecuteScalar() is string schema)
                 {
