@@ -726,7 +726,7 @@ FROM all_tables t
                     var schemaFilterBuilder = new StringBuilder();
                     schemaFilterBuilder.Append(s);
                     schemaFilterBuilder.Append(" IN (");
-                    schemaFilterBuilder.Append(string.Join(", ", schemas.Select(EscapeLiteral)));
+                    schemaFilterBuilder.Append(string.Join(", ", schemas.Select(EscapeLiteral)).ToUpper());
                     schemaFilterBuilder.Append(")");
                     return schemaFilterBuilder.ToString();
                 };
@@ -743,8 +743,8 @@ FROM all_tables t
                     var schemaFilterBuilder = new StringBuilder();
                     schemaFilterBuilder.Append(s);
                     schemaFilterBuilder.Append(" IN (");
-                    schemaFilterBuilder.Append(EscapeLiteral(defaultSchema) + (schemas.Count > 0? ", " : ""));
-                    schemaFilterBuilder.Append(string.Join(", ", schemas.Select(EscapeLiteral)));
+                    schemaFilterBuilder.Append(EscapeLiteral(defaultSchema.ToUpper()) + (schemas.Count > 0? ", " : ""));
+                    schemaFilterBuilder.Append(string.Join(", ", schemas.Select(EscapeLiteral)).ToUpper());
                     schemaFilterBuilder.Append(")");
                     return schemaFilterBuilder.ToString();
                 };
@@ -796,7 +796,7 @@ FROM all_tables t
                         {
                             tableFilterBuilder.Append(t);
                             tableFilterBuilder.Append(" IN (");
-                            tableFilterBuilder.Append(string.Join(", ", tablesWithoutSchema.Select(e => EscapeLiteral(e.Name))));
+                            tableFilterBuilder.Append(string.Join(", ", tablesWithoutSchema.Select(e => EscapeLiteral(e.Name))).ToUpper());
                             tableFilterBuilder.Append(")");
                         }
 
@@ -811,7 +811,7 @@ FROM all_tables t
                             tableFilterBuilder.Append("||N'.'||");
                             tableFilterBuilder.Append(t);
                             tableFilterBuilder.Append(" IN (");
-                            tableFilterBuilder.Append(string.Join(", ", tablesWithSchema.Select(e => EscapeLiteral($"{e.Schema}.{e.Name}"))));
+                            tableFilterBuilder.Append(string.Join(", ", tablesWithSchema.Select(e => EscapeLiteral($"{e.Schema}.{e.Name}"))).ToUpper());
                             tableFilterBuilder.Append(")");
                         }
                     }
@@ -869,7 +869,7 @@ FROM all_tables t
                         {
                             tableFilterBuilder.Append(t);
                             tableFilterBuilder.Append(" IN (");
-                            tableFilterBuilder.Append(string.Join(", ", tablesWithoutSchema.Select(e => EscapeLiteral(e.Table))));
+                            tableFilterBuilder.Append(string.Join(", ", tablesWithoutSchema.Select(e => EscapeLiteral(e.Table))).ToUpper());
                             tableFilterBuilder.Append(")");
                         }
 
@@ -882,13 +882,13 @@ FROM all_tables t
                             }
                             tableFilterBuilder.Append(t);
                             tableFilterBuilder.Append(" IN (");
-                            tableFilterBuilder.Append(string.Join(", ", tablesWithSchema.Select(e => EscapeLiteral(e.Table))));
+                            tableFilterBuilder.Append(string.Join(", ", tablesWithSchema.Select(e => EscapeLiteral(e.Table))).ToUpper());
                             tableFilterBuilder.Append(") AND CONCAT(");
                             tableFilterBuilder.Append(s);
                             tableFilterBuilder.Append(", N'.', ");
                             tableFilterBuilder.Append(t);
                             tableFilterBuilder.Append(") IN (");
-                            tableFilterBuilder.Append(string.Join(", ", tablesWithSchema.Select(e => EscapeLiteral($"{e.Schema}.{e.Table}"))));
+                            tableFilterBuilder.Append(string.Join(", ", tablesWithSchema.Select(e => EscapeLiteral($"{e.Schema}.{e.Table}"))).ToUpper());
                             tableFilterBuilder.Append(")");
                         }
                     }
