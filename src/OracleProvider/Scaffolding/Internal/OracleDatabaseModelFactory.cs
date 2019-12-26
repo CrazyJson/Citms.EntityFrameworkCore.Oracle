@@ -222,7 +222,7 @@ FROM all_tables t
                     .AppendLine("   c.virtual_column")
                     .AppendLine("FROM all_tab_cols c")
                     .AppendLine("  INNER JOIN all_tables t ")
-                    .AppendLine("    ON UPPER(t.table_name)=UPPER(c.table_name)")
+                    .AppendLine("    ON UPPER(t.table_name)=UPPER(c.table_name) AND t.owner = c.owner")
                     .AppendLine(tableFilter)
                     .AppendLine("ORDER BY t.owner")
                     .ToString();
