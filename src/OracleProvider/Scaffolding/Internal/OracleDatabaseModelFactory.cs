@@ -75,7 +75,7 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Scaffolding.Internal
         /// </summary>
         public virtual DatabaseModel Create(DbConnection connection, IEnumerable<string> tables, IEnumerable<string> schemas)
         {
-            while (!System.Diagnostics.Debugger.IsAttached) { }
+            // for bebugging -- while (!System.Diagnostics.Debugger.IsAttached) { }
             Check.NotNull(connection, nameof(connection));
             Check.NotNull(tables, nameof(tables));
             Check.NotNull(schemas, nameof(schemas));
