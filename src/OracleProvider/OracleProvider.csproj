@@ -13,10 +13,11 @@
     <RepositoryUrl>https://github.com/CrazyJson/Citms.EntityFrameworkCore.Oracle</RepositoryUrl>
     <PackageProjectUrl>https://github.com/CrazyJson/Citms.EntityFrameworkCore.Oracle</PackageProjectUrl>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>1.1.0</Version>
-    <FileVersion>1.1.0.0</FileVersion>
-    <AssemblyVersion>1.1.0.0</AssemblyVersion>
-    <PackageReleaseNotes>2019-07-12 修复blob,clob大数据字段转换bug</PackageReleaseNotes>
+    <Version>1.1.1</Version>
+    <FileVersion>1.1.1.0</FileVersion>
+    <AssemblyVersion>1.1.1.0</AssemblyVersion>
+    <PackageReleaseNotes>2019-07-12 修复blob,clob大数据字段转换bug
+2020-06-29 实体不指定typename blob,clob大数据字段也可映射</PackageReleaseNotes>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <LangVersion>latest</LangVersion>

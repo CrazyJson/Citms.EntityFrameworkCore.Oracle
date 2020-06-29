@@ -76,10 +76,10 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Storage.Internal
                   && length <= _maxSpecificSize
                     ? _maxSpecificSize
                     : parameter.Size;
-            if (_storeType == "BLOB")
+            if (parameter.Size == 0 || _storeType == "BLOB")
             {
                 ((OracleParameter)parameter).OracleDbType = OracleDbType.Blob;
-            } 
+            }
         }
 
         protected override string GenerateNonNullSqlLiteral(object value)

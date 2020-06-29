@@ -91,7 +91,7 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Storage.Internal
                 parameter.Size = value == null || value == DBNull.Value || length != null && length <= _maxSpecificSize
                     ? _maxSpecificSize
                     : 0;
-                if (_storeType == "CLOB")
+                if (parameter.Size == 0 || _storeType == "CLOB")
                 {
                     ((OracleParameter)parameter).OracleDbType = OracleDbType.Clob;
                 }
