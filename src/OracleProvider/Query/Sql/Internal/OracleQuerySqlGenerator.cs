@@ -210,7 +210,16 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Query.Sql.Internal
 
                 if (RequiresRowNumberPaging(selectExpression))
                 {
-                    Sql.Append(",rownum RN ");
+                    if (selectExpression.OrderBy != null && selectExpression.OrderBy.Any())
+                    {
+                        string fields = string.Join(",", selectExpression.OrderBy.Select(x => x.ToString()).ToArray());
+                        Sql.Append(string.Format(", row_number() over(order by {0}) RN ", fields));
+                    }
+                    else
+                    {
+                        Sql.Append(",rownum RN ");
+                    }
+
                 }
             }
 
