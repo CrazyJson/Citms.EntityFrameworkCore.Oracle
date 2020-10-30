@@ -23,8 +23,10 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Migrations.Internal
         public OracleHistoryRepository([NotNull] HistoryRepositoryDependencies dependencies)
             : base(dependencies)
         {
+
         }
 
+        protected override string TableName => base.TableName.Replace("_", "").ToUpper();
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
@@ -67,16 +69,23 @@ namespace Microsoft.EntityFrameworkCore.Oracle.Migrations.Internal
         {
             var builder = new IndentedStringBuilder();
 
-            return builder.Append(
-@"BEGIN
-  EXECUTE IMMEDIATE '" + GetCreateScript() + @"';
-EXCEPTION
-WHEN OTHERS THEN
-  IF(SQLCODE != -942)THEN
-      RAISE;
+            var tableName = SqlGenerationHelper.DelimitIdentifier(TableName, TableSchema);
+            return builder.Append($@"
+DECLARE
+  vCount NUMBER;
+BEGIN
+  vCount := 0;
+  SELECT count(*) INTO vCount FROM ALL_TABLES WHERE OWNER = SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA') AND TABLE_NAME = '{tableName}';
+  IF (vCount <> 1) THEN
+    EXECUTE IMMEDIATE '{
+                    GetCreateScript()
+                        .Replace(";", string.Empty)
+                }';
   END IF;
 END;").ToString();
+
         }
+
 
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used

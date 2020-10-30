@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using JetBrains.Annotations;
@@ -20,10 +21,12 @@ namespace Microsoft.EntityFrameworkCore.Migrations
             [NotNull] MigrationsSqlGeneratorDependencies dependencies)
             : base(dependencies)
         {
+
         }
 
         protected override void ColumnDefinition(AddColumnOperation operation, IModel model, MigrationCommandListBuilder builder)
-            => ColumnDefinition(
+        {
+            ColumnDefinition(
                 operation.Schema,
                 operation.Table,
                 operation.Name,
@@ -40,6 +43,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
                 operation,
                 model,
                 builder);
+        }
 
         protected override void Generate(MigrationOperation operation, IModel model, MigrationCommandListBuilder builder)
         {
@@ -214,52 +218,7 @@ END;";
             builder.EndCommand();
         }
 
-        protected override void SequenceOptions(
-            string schema,
-            string name,
-            int increment,
-            long? minimumValue,
-            long? maximumValue,
-            bool cycle,
-            IModel model,
-            MigrationCommandListBuilder builder)
-        {
-            Check.NotEmpty(name, nameof(name));
-            Check.NotNull(increment, nameof(increment));
-            Check.NotNull(cycle, nameof(cycle));
-            Check.NotNull(builder, nameof(builder));
 
-            var intTypeMapping = Dependencies.TypeMappingSource.GetMapping(typeof(int));
-            var longTypeMapping = Dependencies.TypeMappingSource.GetMapping(typeof(long));
-
-            builder
-                .Append(" INCREMENT BY ")
-                .Append(intTypeMapping.GenerateSqlLiteral(increment));
-
-            if (minimumValue != null)
-            {
-                builder
-                    .Append(" MINVALUE ")
-                    .Append(longTypeMapping.GenerateSqlLiteral(minimumValue));
-            }
-            else
-            {
-                builder.Append(" NOMINVALUE");
-            }
-
-            if (maximumValue != null)
-            {
-                builder
-                    .Append(" MAXVALUE ")
-                    .Append(longTypeMapping.GenerateSqlLiteral(maximumValue));
-            }
-            else
-            {
-                builder.Append(" NOMAXVALUE");
-            }
-
-            builder.Append(cycle ? " CYCLE" : " NOCYCLE");
-        }
 
         protected override void Generate(
             RenameSequenceOperation operation,
@@ -334,6 +293,7 @@ END;";
                 .EndCommand();
         }
 
+
         protected virtual void Generate(
             [NotNull] OracleCreateUserOperation operation,
             [CanBeNull] IModel model,
@@ -341,7 +301,6 @@ END;";
         {
             Check.NotNull(operation, nameof(operation));
             Check.NotNull(builder, nameof(builder));
-
             builder
                 .Append(
                     $@"BEGIN
@@ -383,10 +342,10 @@ END;";
                 .Append("DROP INDEX ")
                 .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name));
 
-      
-                builder
-                    .AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator)
-                    .EndCommand();
+
+            builder
+                .AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator)
+                .EndCommand();
 
         }
 
@@ -449,6 +408,7 @@ END;";
         {
             base.Generate(operation, model, builder);
 
+
             var rowVersionColumns = operation.Columns.Where(c => c.IsRowVersion).ToArray();
 
             if (rowVersionColumns.Length > 0)
@@ -477,6 +437,53 @@ END;";
                     .AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
             }
 
+            EndStatement(builder);
+        }
+
+
+
+        protected void CreateSeqScript(
+            CreateTableOperation operation,
+            AddColumnOperation columnOperation,
+            IModel model,
+            MigrationCommandListBuilder builder)
+        {
+
+            var tableName = Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name)
+                .Replace("\"", string.Empty);
+            builder.Append($@"
+DECLARE
+  pCount NUMBER;
+  BEGIN
+    pCount := 0;
+    SELECT COUNT(*) INTO pCount FROM user_objects WHERE object_type='SEQUENCE' AND object_name='{tableName}_SEQ';
+    IF (pCount = 0) THEN
+      EXECUTE IMMEDIATE '
+		CREATE SEQUENCE ""{tableName}_SEQ""
+	  ';
+  END IF;
+END;");
+            EndStatement(builder);
+        }
+
+
+
+
+        protected virtual void CreateInsertTiggerScript(
+            CreateTableOperation operation,
+            AddColumnOperation columnOperation,
+            IModel model,
+            MigrationCommandListBuilder builder)
+        {
+            var tableName = Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name)
+                .Replace("\"", string.Empty);
+            builder.Append($@"
+CREATE OR REPLACE TRIGGER {tableName}_INS_TRG
+  BEFORE INSERT ON {tableName}
+  FOR EACH ROW
+BEGIN
+  SELECT {tableName}_SEQ.NEXTVAL INTO :NEW.{Dependencies.SqlGenerationHelper.DelimitIdentifier(columnOperation.Name)} FROM DUAL;
+END;");
             EndStatement(builder);
         }
 
@@ -561,20 +568,25 @@ END;";
                 .Append(" ")
                 .Append(type ?? GetColumnType(schema, table, name, clrType, unicode, maxLength, fixedLength, rowVersion, model));
 
-            if (identity)
-            {
-                builder.Append(" GENERATED BY DEFAULT ON NULL AS IDENTITY");
-            }
-            else
-            {
-                DefaultValue(defaultValue, defaultValueSql, builder);
-            }
+
+            //if (identity && EFCoreOracleConfiguration.UseGeneratedByDefaultOnNullAsIdentity)
+            //{
+            //    // only 12g support
+            //    builder.Append(" GENERATED BY DEFAULT ON NULL AS IDENTITY");
+            //}
+            //else
+            //{
+            //    DefaultValue(defaultValue, defaultValueSql, builder);
+            //}
+
+            DefaultValue(defaultValue, defaultValueSql, builder);
 
             if (!nullable)
             {
                 builder.Append(" NOT NULL");
             }
         }
+
 
         protected override void ForeignKeyConstraint(
             AddForeignKeyOperation operation,
@@ -620,10 +632,12 @@ END;";
             }
         }
 
+
         protected virtual void Rename(
             [NotNull] string name,
             [NotNull] string newName,
             [NotNull] MigrationCommandListBuilder builder) => Rename(name, newName, /*type:*/ null, builder);
+
 
         protected virtual void Rename(
             [NotNull] string name,
@@ -653,6 +667,7 @@ END;";
             builder.AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
         }
 
+
         protected virtual void DropDefaultConstraint(
             [CanBeNull] string schema,
             [NotNull] string tableName,
@@ -671,6 +686,125 @@ END;";
                 .Append(" DEFAULT NULL")
                 .AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator)
                 .EndCommand();
+        }
+
+
+        protected override void DefaultValue([CanBeNull] object defaultValue, [CanBeNull] string defaultValueSql, [NotNull] MigrationCommandListBuilder builder)
+        {
+            base.DefaultValue(defaultValue, defaultValueSql, builder);
+        }
+
+
+        protected override void Generate(
+           [NotNull] CreateTableOperation operation,
+           [CanBeNull] IModel model,
+           [NotNull] MigrationCommandListBuilder builder,
+           bool terminate)
+        {
+            base.Generate(operation, model, builder, terminate);
+
+            var identityColumns = new List<AddColumnOperation>();
+            foreach (var item in operation.Columns)
+            {
+                var tmpAnnotation = item.GetAnnotations().FirstOrDefault(o => o.Name == OracleAnnotationNames.ValueGenerationStrategy);
+                if (tmpAnnotation == null)
+                {
+                    continue;
+                }
+                if ((tmpAnnotation.Value as OracleValueGenerationStrategy?)
+                    == OracleValueGenerationStrategy.IdentityColumn)
+                {
+                    identityColumns.Add(item);
+                }
+            }
+
+            if (identityColumns.Count > 0 && identityColumns.Count == 1)
+            {
+                CreateSeqScript(operation, identityColumns[0], model, builder);
+                CreateInsertTiggerScript(operation, identityColumns[0], model, builder);
+            }
+        }
+
+        /// <summary>
+        /// create primarykey script 
+        /// </summary>
+        /// <param name="operation"></param>
+        /// <param name="model"></param>
+        /// <param name="builder"></param>
+        protected override void PrimaryKeyConstraint([NotNull] AddPrimaryKeyOperation operation, [CanBeNull] IModel model, [NotNull] MigrationCommandListBuilder builder)
+        {
+            Check.NotNull(operation, nameof(operation));
+            Check.NotNull(builder, nameof(builder));
+
+
+            if (operation.Name != null)
+            {
+                builder
+                    .Append("CONSTRAINT ")
+                    .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
+                    .Append(" ");
+            }
+
+            builder
+                .Append("PRIMARY KEY ");
+
+            IndexTraits(operation, model, builder);
+
+            builder.Append("(")
+                .Append(ColumnList(operation.Columns))
+                .Append(")");
+        }
+
+        protected override void Generate([NotNull] CreateSequenceOperation operation, [CanBeNull] IModel model, [NotNull] MigrationCommandListBuilder builder)
+        {
+            base.Generate(operation, model, builder);
+        }
+
+        protected override void SequenceOptions(
+           string schema,
+           string name,
+           int increment,
+           long? minimumValue,
+           long? maximumValue,
+           bool cycle,
+           IModel model,
+           MigrationCommandListBuilder builder)
+        {
+            Check.NotEmpty(name, nameof(name));
+            Check.NotNull(increment, nameof(increment));
+            Check.NotNull(cycle, nameof(cycle));
+            Check.NotNull(builder, nameof(builder));
+
+            var intTypeMapping = Dependencies.TypeMappingSource.GetMapping(typeof(int));
+            var longTypeMapping = Dependencies.TypeMappingSource.GetMapping(typeof(long));
+
+            builder
+                .Append(" INCREMENT BY ")
+                .Append(intTypeMapping.GenerateSqlLiteral(increment));
+
+            if (minimumValue != null)
+            {
+                builder
+                    .Append(" MINVALUE ")
+                    .Append(longTypeMapping.GenerateSqlLiteral(minimumValue));
+            }
+            else
+            {
+                builder.Append(" NOMINVALUE");
+            }
+
+            if (maximumValue != null)
+            {
+                builder
+                    .Append(" MAXVALUE ")
+                    .Append(longTypeMapping.GenerateSqlLiteral(maximumValue));
+            }
+            else
+            {
+                builder.Append(" NOMAXVALUE");
+            }
+
+            builder.Append(cycle ? " CYCLE" : " NOCYCLE");
         }
     }
 }
